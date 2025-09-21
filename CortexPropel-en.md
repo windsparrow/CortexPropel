@@ -60,5 +60,7 @@ We aim to treat intelligence as a resource, leveraging accumulated intellectual 
 
 ## Some Reflections
 > Agents are merely the means to achieve our goals, not the ends themselves. We will use agents to tap into the unlimited intellectual resources from LLMs.
+
 > We believe in “brute intelligence” the way others believe in brute force.
+
 > We believe that AI-era software can evolve autonomously.
