@@ -1,0 +1,21 @@
+{
+  "llm": {
+    "provider": "custom",
+    "model": "custom-model",
+    "temperature": 0.7,
+    "max_tokens": 1000,
+    "api_key": null,
+    "api_base": "https://your-custom-endpoint.com/v1"
+  },
+  "storage": {
+    "data_dir": "~/.cortex_propel",
+    "backup_enabled": true,
+    "backup_frequency": "daily",
+    "max_backups": 10
+  },
+  "cli": {
+    "default_project": "personal",
+    "output_format": "text",
+    "confirm_destructive_actions": true
+  }
+}
