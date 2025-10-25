@@ -1,0 +1,2 @@
+[console_scripts]
+cortex = cortexpropel.main:cli
