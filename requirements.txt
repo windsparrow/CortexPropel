@@ -1,4 +1,26 @@
-litellm
-click
-pydantic
-matplotlib
+# 核心依赖
+langgraph>=0.0.40
+langchain>=0.1.0
+langchain-community>=0.0.20
+
+# LLM 提供商
+openai>=1.0.0
+
+# CLI 工具
+click>=8.0.0
+rich>=13.0.0
+
+# 数据处理
+pydantic>=2.0.0
+python-dateutil>=2.8.0
+
+# 开发和测试
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# 其他工具
+python-dotenv>=1.0.0
+requests>=2.28.0

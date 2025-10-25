@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: cortexpropel
-Version: 0.1.0
-Requires-Dist: click
-Requires-Dist: litellm
-Requires-Dist: pydantic
-Dynamic: requires-dist
