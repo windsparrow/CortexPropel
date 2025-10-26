@@ -1,0 +1,98 @@
+{
+  "tasks": [
+    {
+      "id": "0f6690bc-7086-4b61-a879-cf642d7884a3",
+      "title": "完成项目需求分析",
+      "description": "分析用户需求，编写需求文档，确定功能范围",
+      "status": "completed",
+      "priority": "high",
+      "created_at": "2025-10-26T00:40:10.975952",
+      "updated_at": "2025-10-26T00:40:10.977028",
+      "due_date": "2025-10-29T00:40:10.975217",
+      "completed_at": "2025-10-26T00:40:10.976771",
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [
+        "已完成",
+        "需求分析"
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "f2473f86-b94f-44ba-9e24-88805be57989",
+      "title": "设计数据库架构",
+      "description": "设计系统数据库表结构，确定数据关系",
+      "status": "in_progress",
+      "priority": "medium",
+      "created_at": "2025-10-26T00:40:10.976362",
+      "updated_at": "2025-10-26T00:40:10.976862",
+      "due_date": "2025-11-02T00:40:10.975224",
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    },
+    {
+      "id": "bb7fa817-82ea-4236-89dd-2e9bf675802c",
+      "title": "实现用户认证模块",
+      "description": "开发用户注册、登录、权限管理功能",
+      "status": "blocked",
+      "priority": "high",
+      "created_at": "2025-10-26T00:40:10.976450",
+      "updated_at": "2025-10-26T00:40:10.976944",
+      "due_date": "2025-11-05T00:40:10.975225",
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    },
+    {
+      "id": "52893c80-5d8b-410f-922a-2ebb6f887c9c",
+      "title": "编写单元测试",
+      "description": "为核心功能编写单元测试用例",
+      "status": "pending",
+      "priority": "medium",
+      "created_at": "2025-10-26T00:40:10.976523",
+      "updated_at": "2025-10-26T00:40:10.976523",
+      "due_date": "2025-11-09T00:40:10.975226",
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    },
+    {
+      "id": "fa766092-ce5c-488b-85fb-6020d1fef980",
+      "title": "部署测试环境",
+      "description": "配置测试服务器，部署应用程序",
+      "status": "pending",
+      "priority": "low",
+      "created_at": "2025-10-26T00:40:10.976598",
+      "updated_at": "2025-10-26T00:40:10.976598",
+      "due_date": "2025-10-31T00:40:10.975226",
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    },
+    {
+      "id": "361e31e8-48c6-4d1e-8ec9-334b140d2ab8",
+      "title": "完成项目文档",
+      "description": "\n\n进展: 删除任务",
+      "status": "cancelled",
+      "priority": "high",
+      "created_at": "2025-10-26T11:38:17.042756",
+      "updated_at": "2025-10-26T11:48:46.694677",
+      "due_date": null,
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    }
+  ],
+  "last_updated": "2025-10-26T11:48:46.694807"
+}

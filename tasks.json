@@ -1,0 +1,35 @@
+{
+  "tasks": [
+    {
+      "id": "e02bc7d9-689e-4ba5-b9fe-9149e8285644",
+      "title": "数据模型建立的工作",
+      "description": "",
+      "status": "pending",
+      "priority": "medium",
+      "created_at": "2025-10-26T11:54:06.747016",
+      "updated_at": "2025-10-26T11:54:06.747024",
+      "due_date": null,
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    },
+    {
+      "id": "e3c978ce-cde7-428a-a760-fccf696fb51b",
+      "title": "数据模型建立的工作",
+      "description": "项目中第1阶段任务中的",
+      "status": "pending",
+      "priority": "medium",
+      "created_at": "2025-10-26T11:57:58.186927",
+      "updated_at": "2025-10-26T11:57:58.186935",
+      "due_date": null,
+      "completed_at": null,
+      "parent_id": null,
+      "subtask_ids": [],
+      "tags": [],
+      "metadata": {}
+    }
+  ],
+  "last_updated": "2025-10-26T11:57:58.187026"
+}
