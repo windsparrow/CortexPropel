@@ -55,7 +55,7 @@ We aim to treat intelligence as a resource, leveraging accumulated intellectual 
 
 ## Technical Architecture
 
-**Agent Framework**: LangGraph
+**Agent Framework**: LangChain。
 **Database**: Initially using file read/write operations
 **Interface**: Initially using CLI interaction
 
