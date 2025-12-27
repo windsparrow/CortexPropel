@@ -1,0 +1,7 @@
+langchain
+python-dotenv
+pydantic
+requests
+langchain-community
+dashscope  # For ByteDance Tongyi model
+langchain-tongyi  # Additional support for Tongyi models
