@@ -4,7 +4,12 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 
-from .config import config
+# Handle imports for both package and standalone execution
+try:
+    from .config import config
+except ImportError:
+    # Standalone execution
+    from config import config
 
 
 class TaskDatabase:

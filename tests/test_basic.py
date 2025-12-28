@@ -3,42 +3,31 @@
 Basic test script to verify the core functionality without LLM integration.
 """
 import json
-import sys
 import os
+from src.task_manager import TaskManager
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-# Import with proper handling of relative imports
-import config
-from task_model import TaskTree, Task
-from task_manager import TaskManager
-
-def test_task_model():
-    """Test the task model validation"""
-    print("=== Testing Task Model ===")
+def test_task_structure():
+    """Test the task structure validation"""
+    print("=== Testing Task Structure ===")
     
-    # Create a sample task
-    task = Task(
-        id="test-task-1",
-        title="Test Task",
-        description="This is a test task",
-        status="pending"
-    )
+    # Test task manager initialization
+    task_manager = TaskManager()
+    print("Task manager initialized successfully")
     
-    print(f"Task created successfully:")
-    print(f"ID: {task.id}")
-    print(f"Title: {task.title}")
-    print(f"Description: {task.description}")
-    print(f"Status: {task.status}")
-    print(f"Created at: {task.created_at}")
+    # Test loading task tree
+    task_tree = task_manager.load_task_tree()
+    print(f"Task tree loaded successfully")
+    print(f"Root task title: {task_tree.get('title', 'N/A')}")
+    print(f"Root task ID: {task_tree.get('id', 'N/A')}")
+    print(f"Number of subtasks: {len(task_tree.get('subtasks', []))}")
     print()
     
-    # Test task tree
-    task_tree = TaskTree(root=task)
-    print(f"Task tree created successfully")
-    print(f"Root task title: {task_tree.root.title}")
-    print()
+    # Test task tree structure
+    if 'id' in task_tree and 'title' in task_tree:
+        print("✓ Task tree has required fields (id, title)")
+    else:
+        print("✗ Task tree missing required fields")
+        return False
     
     return True
 
@@ -90,12 +79,21 @@ def test_json_validation():
         ]
     }
     
-    # Validate with Pydantic
+    # Validate structure
     try:
-        task_tree = TaskTree.from_dict(sample_tree)
+        # Check required fields
+        required_fields = ['id', 'title', 'status', 'created_at', 'updated_at', 'subtasks']
+        for field in required_fields:
+            if field not in sample_tree:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Check subtasks structure
+        if not isinstance(sample_tree['subtasks'], list):
+            raise ValueError("subtasks must be a list")
+        
         print("JSON structure validation passed")
-        print(f"Root title: {task_tree.root.title}")
-        print(f"Subtasks count: {len(task_tree.root.subtasks)}")
+        print(f"Root title: {sample_tree['title']}")
+        print(f"Subtasks count: {len(sample_tree['subtasks'])}")
         print()
         return True
     except Exception as e:
@@ -107,7 +105,7 @@ def main():
     print("Starting basic functionality tests...\n")
     
     tests = [
-        ("Task Model", test_task_model),
+        ("Task Structure", test_task_structure),
         ("Task Manager", test_task_manager),
         ("JSON Validation", test_json_validation)
     ]

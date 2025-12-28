@@ -6,15 +6,12 @@ import sys
 import os
 import json
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 # Set environment variables to force mock usage
 os.environ["MODEL_API_KEY"] = ""
 os.environ["MODEL_NAME"] = "mock_model"
 
-from task_manager import TaskManager
-from llm_client import LLMClient
+from src.task_manager import TaskManager
+from src.llm_client import LLMClient
 
 def test_mock_llm():
     print("=== Testing MockLLM Forcing ===\n")

@@ -8,13 +8,7 @@ import os
 import uuid
 from datetime import datetime
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-# Import with proper handling of relative imports
-import config
-from task_model import TaskTree, Task
-from task_manager import TaskManager
+from src.task_manager import TaskManager
 
 class MockLLM:
     """A mock LLM that actually processes tasks"""

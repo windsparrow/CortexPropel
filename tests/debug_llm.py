@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """Test script to debug LLM response."""
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from src.llm_client import LLMClient
 import json
 
@@ -38,10 +34,10 @@ def debug_llm_response():
     print(f"User input: 下午3点去买菜")
     
     try:
-        response = llm_client.chain.run(
-            current_task_tree=task_tree_json,
-            user_input="下午3点去买菜"
-        )
+        response = llm_client.chain.invoke({
+            "current_task_tree": task_tree_json,
+            "user_input": "下午3点去买菜"
+        })
         
         print(f"\nRaw LLM response:")
         print(repr(response))

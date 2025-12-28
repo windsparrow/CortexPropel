@@ -6,10 +6,7 @@ import sys
 import os
 import json
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from llm_client import LLMClient
+from src.llm_client import LLMClient
 
 def debug_llmclient():
     print("=== Debug LLMClient ===\n")
@@ -36,10 +33,10 @@ def debug_llmclient():
     
     try:
         # Test the chain directly
-        response = llm_client.chain.run(
-            current_task_tree=task_tree_json,
-            user_input="准备项目文档"
-        )
+        response = llm_client.chain.invoke({
+            "current_task_tree": task_tree_json,
+            "user_input": "准备项目文档"
+        })
         print("Chain response:")
         print(response)
         print()

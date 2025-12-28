@@ -6,10 +6,7 @@ import sys
 import os
 import json
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from task_manager import TaskManager
+from src.task_manager import TaskManager
 
 def debug_cli():
     print("=== Debug CLI Test ===\n")

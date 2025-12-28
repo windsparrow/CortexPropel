@@ -4,7 +4,12 @@ from typing import Dict, Any
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
-from .config import config
+# Handle imports for both package and standalone execution
+try:
+    from .config import config
+except ImportError:
+    # Standalone execution
+    from config import config
 
 
 class LLMClient:
