@@ -1,20 +1,25 @@
 import json
 import os
+from typing import Dict, Any, Optional
 
 # Handle imports for both package and standalone execution
 try:
     from .config import config
     from .llm_client import LLMClient
+    from .database import TaskDatabase
 except ImportError:
     # Standalone execution
     from config import config
     from llm_client import LLMClient
+    from database import TaskDatabase
+
 
 class TaskManager:
     def __init__(self):
         self.llm_client = LLMClient()
         self.task_tree_file = config.TASK_TREE_FILE
-        
+        self.db = TaskDatabase()  # Initialize database
+    
     def _initialize_task_tree(self) -> dict:
         """
         Initialize a new task tree with root node.
@@ -57,7 +62,7 @@ class TaskManager:
     
     def save_task_tree(self, task_tree: dict) -> None:
         """
-        Save the task tree to the JSON file.
+        Save the task tree to the JSON file and sync to database.
         
         Args:
             task_tree: The task tree to save as a dictionary
@@ -68,6 +73,10 @@ class TaskManager:
             
             with open(self.task_tree_file, "w", encoding="utf-8") as f:
                 json.dump(task_tree, f, ensure_ascii=False, indent=2)
+            
+            # Sync to database
+            self.db.sync_from_task_tree(task_tree)
+            
         except IOError as e:
             print(f"Error saving task tree: {e}")
     
@@ -87,7 +96,7 @@ class TaskManager:
         # Process input using LLM
         updated_tree = self.llm_client.process_task_input(current_tree, user_input)
         
-        # Save updated task tree
+        # Save updated task tree (this will also sync to database)
         self.save_task_tree(updated_tree)
         
         return updated_tree
@@ -111,3 +120,76 @@ class TaskManager:
         initial_tree = self._initialize_task_tree()
         self.save_task_tree(initial_tree)
         return initial_tree
+    
+    # Database management methods
+    def get_task_metadata(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get task metadata from database.
+        
+        Args:
+            task_id: The task ID
+            
+        Returns:
+            Task metadata or None if not found
+        """
+        return self.db.get_task(task_id)
+    
+    def get_all_tasks_metadata(self) -> list:
+        """
+        Get all tasks metadata from database.
+        
+        Returns:
+            List of all task metadata
+        """
+        return self.db.get_all_tasks()
+    
+    def update_task_metadata(self, task_id: str, metadata: Dict[str, Any]) -> bool:
+        """
+        Update task metadata.
+        
+        Args:
+            task_id: The task ID
+            metadata: Dictionary of metadata fields to update
+            
+        Returns:
+            Success status
+        """
+        # Ensure task_id is included in the metadata
+        metadata['id'] = task_id
+        return self.db.create_or_update_task(metadata, {})
+    
+    def update_task_field(self, task_id: str, field: str, value: Any) -> bool:
+        """
+        Update a specific field of task metadata.
+        
+        Args:
+            task_id: The task ID
+            field: Field name to update
+            value: New value
+            
+        Returns:
+            Success status
+        """
+        return self.db.update_task_field(task_id, field, value)
+    
+    def delete_task_metadata(self, task_id: str) -> bool:
+        """
+        Delete task metadata from database.
+        
+        Args:
+            task_id: The task ID
+            
+        Returns:
+            Success status
+        """
+        return self.db.delete_task(task_id)
+    
+    def sync_task_tree_to_db(self) -> bool:
+        """
+        Manually sync current task tree to database.
+        
+        Returns:
+            Success status
+        """
+        current_tree = self.load_task_tree()
+        return self.db.sync_from_task_tree(current_tree)
