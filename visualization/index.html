@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务可视化调试工具</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #ecf0f1;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .content {
+            display: flex;
+            height: calc(100vh - 180px);
+            min-height: 600px;
+        }
+        
+        .tree-panel {
+            flex: 1;
+            border-right: 1px solid #ecf0f1;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        .table-panel {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .tree-container {
+            width: 100%;
+            height: calc(100vh - 290px);
+            min-height: 450px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tree-controls {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        #tree-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .node {
+            cursor: pointer;
+        }
+        
+        .node circle {
+            stroke-width: 2px;
+        }
+        
+        .node text {
+            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+        
+        .table-container {
+            height: calc(100vh - 290px);
+            min-height: 450px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-pending {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .status-completed {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .status-in-progress {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            background-color: #fff3cd !important;
+        }
+        
+        .validation-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .validation-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .validation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .validation-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            color: #e74c3c;
+            background-color: #fdf2f2;
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 任务可视化调试工具</h1>
+            <p>任务树结构展示 & 数据库内容验证</p>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="total-tasks">-</div>
+                <div class="stat-label">总任务数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="tree-tasks">-</div>
+                <div class="stat-label">JSON中的任务</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="db-tasks">-</div>
+                <div class="stat-label">数据库中的任务</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="consistency">-</div>
+                <div class="stat-label">数据一致性</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="tree-panel">
+                <div class="panel-title">📊 任务树结构 (JSON)</div>
+                <div id="tree-validation" class="validation-status" style="display: none;"></div>
+                <div class="tree-controls">
+                    <button onclick="resetTreeView()" style="padding: 4px 8px; margin-right: 10px; font-size: 12px; cursor: pointer;">重置视图</button>
+                    <span style="font-size: 12px; color: #666;">拖拽移动 | 滚轮缩放</span>
+                </div>
+                <div class="tree-container">
+                    <svg id="tree-svg"></svg>
+                </div>
+            </div>
+            
+            <div class="table-panel">
+                <div class="panel-title">📋 任务详情列表 (数据库)</div>
+                <div id="table-validation" class="validation-status" style="display: none;"></div>
+                <div class="table-container">
+                    <table id="tasks-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>标题</th>
+                                <th>状态</th>
+                                <th>描述</th>
+                                <th>创建时间</th>
+                                <th>更新时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasks-tbody">
+                            <tr><td colspan="6" class="loading">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let treeData = null;
+        let tasksData = null;
+        let validationData = null;
+        let treeZoom = null;
+        let treeSvg = null;
+        
+        // API base URL
+        const API_BASE = window.location.origin;
+        
+        // Status color mapping
+        const statusColors = {
+            'pending': '#f39c12',
+            'completed': '#27ae60', 
+            'in-progress': '#3498db',
+            'failed': '#e74c3c'
+        };
+        
+        // Initialize the visualization
+        async function initializeVisualization() {
+            try {
+                // Load all data
+                await Promise.all([
+                    loadTaskTree(),
+                    loadTasksList(),
+                    loadValidationData()
+                ]);
+                
+                // Update UI
+                updateStatistics();
+                renderTree();
+                renderTable();
+                showValidationResults();
+                
+            } catch (error) {
+                showError('初始化失败: ' + error.message);
+            }
+        }
+        
+        // Load task tree data
+        async function loadTaskTree() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tree`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                treeData = data.tree;
+                console.log('Loaded tree data from server:', treeData);
+                console.log('Total tasks reported:', data.total_tasks);
+                document.getElementById('tree-tasks').textContent = data.total_tasks;
+            } catch (error) {
+                console.error('Failed to load task tree:', error);
+                throw new Error('无法加载任务树数据');
+            }
+        }
+        
+        // Load tasks list from database
+        async function loadTasksList() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                tasksData = data.tasks;
+                document.getElementById('db-tasks').textContent = data.total_count;
+            } catch (error) {
+                console.error('Failed to load tasks list:', error);
+                throw new Error('无法加载任务列表数据');
+            }
+        }
+        
+        // Load validation data
+        async function loadValidationData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/validate`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                validationData = await response.json();
+                
+                const consistencyPercent = Math.round(validationData.consistency_score * 100);
+                document.getElementById('consistency').textContent = consistencyPercent + '%';
+                
+            } catch (error) {
+                console.error('Failed to load validation data:', error);
+                // Don't fail the whole visualization if validation fails
+                validationData = {
+                    json_only_tasks: [],
+                    db_only_tasks: [],
+                    common_tasks: [],
+                    consistency_score: 0,
+                    issues: ['无法加载验证数据']
+                };
+            }
+        }
+        
+        // Update overall statistics
+        function updateStatistics() {
+            if (tasksData) {
+                document.getElementById('total-tasks').textContent = tasksData.length;
+            }
+        }
+        
+        // Render D3.js tree visualization
+        function renderTree() {
+            if (!treeData) return;
+            
+            console.log('Tree data:', treeData);
+            console.log('Subtasks count:', treeData.subtasks ? treeData.subtasks.length : 0);
+            
+            const container = d3.select('#tree-svg');
+            const containerNode = container.node();
+            const width = containerNode.clientWidth;
+            const height = containerNode.clientHeight;
+            
+            // Clear existing content
+            container.selectAll('*').remove();
+            
+            // Set up SVG with proper dimensions
+            const svg = container
+                .attr('width', width)
+                .attr('height', height);
+            
+            // Create zoom behavior with better parameters
+            treeZoom = d3.zoom()
+                .scaleExtent([0.05, 5])
+                .translateExtent([[-width, -height], [width * 2, height * 2]])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+            
+            svg.call(treeZoom);
+            treeSvg = svg;
+            
+            // Create main group with better initial positioning for horizontal layout
+            const g = svg.append('g')
+                .attr('transform', `translate(50, 50)`);
+            
+            // Create tree layout for horizontal layout (flipped coordinates)
+            const treeLayout = d3.tree()
+                .nodeSize([250, 150])  // [width, height] - increased for better text spacing
+                .separation((a, b) => {
+                    // Better separation for different depths - more space between nodes
+                    return (a.parent == b.parent ? 1.5 : 2.5);
+                });
+            
+            // Create hierarchy with proper children accessor
+            const root = d3.hierarchy(treeData, d => d.subtasks);
+            
+            console.log('Hierarchy created:', root);
+            console.log('Descendants count:', root.descendants().length);
+            
+            // Apply tree layout
+            const treeDataProcessed = treeLayout(root);
+            
+            console.log('First few node positions:');
+            treeDataProcessed.descendants().slice(0, 5).forEach((d, i) => {
+                console.log(`Node ${i}: x=${d.x}, y=${d.y}, title=${d.data.title}`);
+            });
+            
+            // Calculate bounds and center the tree for horizontal layout
+            const allNodes = treeDataProcessed.descendants();
+            const xExtent = d3.extent(allNodes, d => d.x);
+            const yExtent = d3.extent(allNodes, d => d.y);
+            const treeWidth = xExtent[1] - xExtent[0];
+            const treeHeight = yExtent[1] - yExtent[0];
+            
+            // Center the tree horizontally in the viewport
+            const scale = Math.min(width / (treeWidth + 300), height / (treeHeight + 200)) * 0.9;
+            const translateX = 50; // Start from left with margin
+            const translateY = (height - treeHeight * scale) / 2 - yExtent[0] * scale;
+            
+            // Apply initial transform to center the tree
+            const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+            svg.call(treeZoom.transform, initialTransform);
+            
+            // Add links - use horizontal layout (flipped coordinates)
+            const links = treeDataProcessed.links();
+            console.log('Links count:', links.length);
+            
+            const link = g.append('g')
+                .selectAll('.link')
+                .data(links)
+                .enter().append('path')
+                .attr('class', 'link')
+                .attr('d', d3.linkHorizontal()
+                    .x(d => d.y)  // Flip x and y for horizontal layout
+                    .y(d => d.x));
+            
+            // Add nodes - use flipped coordinates for horizontal layout
+            const descendants = treeDataProcessed.descendants();
+            console.log('Nodes count:', descendants.length);
+            
+            const node = g.append('g')
+                .selectAll('.node')
+                .data(descendants)
+                .enter().append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.y}, ${d.x})`)  // Flip x and y for horizontal
+            
+            // Add circles
+            node.append('circle')
+                .attr('r', 8)
+                .attr('fill', d => {
+                    const status = d.data.status || 'pending';
+                    return statusColors[status] || statusColors.pending;
+                })
+                .attr('stroke', d => {
+                    const taskId = d.data.id || '';
+                    // Highlight tasks that only exist in JSON
+                    if (validationData && validationData.json_only_tasks.includes(taskId)) {
+                        return '#e74c3c';
+                    }
+                    return '#fff';
+                })
+                .on('click', (event, d) => {
+                    highlightTaskInTable(d.data.id);
+                });
+            
+            // Add labels for horizontal layout - position to the right of nodes
+            node.append('text')
+                .attr('dy', '0.31em')
+                .attr('x', 12)
+                .attr('text-anchor', 'start')
+                .text(d => d.data.title || d.data.id || 'Unknown')
+                .style('font-size', '12px')
+                .style('fill', '#2c3e50')
+                .style('font-weight', '500');
+            
+            // Add tooltips
+            node.append('title')
+                .text(d => {
+                    const title = d.data.title || 'No title';
+                    const id = d.data.id || 'No ID';
+                    const status = d.data.status || 'pending';
+                    const desc = d.data.description || 'No description';
+                    return `${title}\nID: ${id}\nStatus: ${status}\n${desc}`;
+                });
+        }
+        
+        // Render tasks table
+        function renderTable() {
+            if (!tasksData) return;
+            
+            const tbody = document.getElementById('tasks-tbody');
+            
+            if (tasksData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #7f8c8d;">暂无任务数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = tasksData.map(task => {
+                const status = task.status || 'pending';
+                const statusClass = `status-${status}`;
+                
+                // Check if this task only exists in database
+                let rowClass = '';
+                if (validationData && validationData.db_only_tasks.includes(task.id)) {
+                    rowClass = 'style="background-color: #ffebee;"';
+                }
+                
+                return `
+                    <tr ${rowClass} data-task-id="${task.id}">
+                        <td><code>${task.id}</code></td>
+                        <td>${task.title || '无标题'}</td>
+                        <td><span class="${statusClass}">${status}</span></td>
+                        <td>${task.description || '无描述'}</td>
+                        <td>${formatDate(task.created_at)}</td>
+                        <td>${formatDate(task.updated_at)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Highlight task in table
+        function highlightTaskInTable(taskId) {
+            // Remove previous highlights
+            document.querySelectorAll('#tasks-tbody tr').forEach(row => {
+                row.classList.remove('highlight');
+            });
+            
+            // Highlight the clicked task
+            const targetRow = document.querySelector(`tr[data-task-id="${taskId}"]`);
+            if (targetRow) {
+                targetRow.classList.add('highlight');
+                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        // Show validation results
+        function showValidationResults() {
+            if (!validationData) return;
+            
+            // Tree panel validation
+            const treeValidation = document.getElementById('tree-validation');
+            if (validationData.json_only_tasks.length > 0) {
+                treeValidation.className = 'validation-status validation-warning';
+                treeValidation.innerHTML = `⚠️ JSON中存在但数据库中不存在的任务: ${validationData.json_only_tasks.length}个`;
+                treeValidation.style.display = 'block';
+            }
+            
+            // Table panel validation  
+            const tableValidation = document.getElementById('table-validation');
+            if (validationData.db_only_tasks.length > 0) {
+                tableValidation.className = 'validation-status validation-error';
+                tableValidation.innerHTML = `❌ 数据库中存在但JSON中不存在的任务: ${validationData.db_only_tasks.length}个`;
+                tableValidation.style.display = 'block';
+            }
+            
+            // Overall validation status
+            if (validationData.issues.length === 0) {
+                // No issues found
+                const overallStatus = document.createElement('div');
+                overallStatus.className = 'validation-status validation-success';
+                overallStatus.innerHTML = '✅ 数据一致性检查通过';
+                document.querySelector('.header').appendChild(overallStatus);
+            }
+        }
+        
+        // Utility functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch {
+                return dateString;
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.body.insertBefore(errorDiv, document.body.firstChild);
+        }
+        
+        // Reset tree view to initial centered position for horizontal layout
+        function resetTreeView() {
+            if (treeSvg && treeZoom) {
+                const container = d3.select('#tree-svg');
+                const containerNode = container.node();
+                const width = containerNode.clientWidth;
+                const height = containerNode.clientHeight;
+                
+                // Get current tree data to recalculate bounds
+                if (treeData) {
+                    const treeLayout = d3.tree()
+                        .nodeSize([250, 150])  // Horizontal layout parameters
+                        .separation((a, b) => (a.parent == b.parent ? 1.5 : 2.5));
+                    
+                    const root = d3.hierarchy(treeData, d => d.subtasks);
+                    const treeDataProcessed = treeLayout(root);
+                    
+                    const allNodes = treeDataProcessed.descendants();
+                    const xExtent = d3.extent(allNodes, d => d.x);
+                    const yExtent = d3.extent(allNodes, d => d.y);
+                    const treeWidth = xExtent[1] - xExtent[0];
+                    const treeHeight = yExtent[1] - yExtent[0];
+                    
+                    // Center the tree horizontally
+                    const scale = Math.min(width / (treeWidth + 300), height / (treeHeight + 200)) * 0.9;
+                    const translateX = 50; // Start from left with margin
+                    const translateY = (height - treeHeight * scale) / 2 - yExtent[0] * scale;
+                    
+                    // Apply transform with smooth transition
+                    const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+                    treeSvg.transition().duration(750).call(treeZoom.transform, initialTransform);
+                }
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeVisualization);
+    </script>
+</body>
+</html>

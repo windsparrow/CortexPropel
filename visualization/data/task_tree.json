@@ -1,0 +1,56 @@
+{
+  "id": "root",
+  "title": "Root Task",
+  "description": "Main project task",
+  "status": "pending",
+  "created_at": "2025-12-27T10:00:00Z",
+  "updated_at": "2025-12-27T10:00:05Z",
+  "subtasks": [
+    {
+      "id": "16d8efc0-22cf-422a-a6dc-28275fdd00e1",
+      "title": "准备项目文档",
+      "description": "Create and finalize project documentation including requirements, scope, and deliverables",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:01Z",
+      "updated_at": "2025-12-27T10:00:01Z",
+      "subtasks": []
+    },
+    {
+      "id": "f6fa70d0-7d28-4c32-9a6c-50756991911c",
+      "title": "设计系统架构",
+      "description": "Design and finalize the system architecture including components, interactions, and technical specifications",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:02Z",
+      "updated_at": "2025-12-27T10:00:02Z",
+      "subtasks": []
+    },
+    {
+      "id": "dcaad267-ccb1-4005-b05c-eda4bce9905e",
+      "title": "实现用户认证功能",
+      "description": "Implement and test user authentication functionality including registration, login, password reset, and security measures",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:03Z",
+      "updated_at": "2025-12-27T10:00:04Z",
+      "subtasks": [
+        {
+          "id": "4fd49451-3377-4fc3-a50d-32051fe3bde9",
+          "title": "编写单元测试",
+          "description": "Write and execute unit tests for the user authentication functionality to verify code correctness and edge cases",
+          "status": "pending",
+          "created_at": "2025-12-27T10:00:04Z",
+          "updated_at": "2025-12-27T10:00:04Z",
+          "subtasks": []
+        }
+      ]
+    },
+    {
+      "id": "8bf8637d-67ae-4915-8d40-720f8c084a81",
+      "title": "部署到测试环境",
+      "description": "Deploy the application to the test environment for initial testing and validation",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:05Z",
+      "updated_at": "2025-12-27T10:00:05Z",
+      "subtasks": []
+    }
+  ]
+}
