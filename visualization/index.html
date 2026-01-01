@@ -1,668 +1,712 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>任务可视化调试工具</title>
+    <title>CortexPropel - 任务全景视图</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #6366f1;
+            /* Indigo 500 */
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-color: #f8fafc;
+            /* Slate 50 */
+            --panel-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            /* Slate 800 */
+            --text-secondary: #64748b;
+            /* Slate 500 */
+            --border-color: #e2e8f0;
+            /* Slate 200 */
+
+            --status-pending: #f59e0b;
+            /* Amber 500 */
+            --status-completed: #10b981;
+            /* Emerald 500 */
+            --status-inprogress: #3b82f6;
+            /* Blue 500 */
+            --status-failed: #ef4444;
+            /* Red 500 */
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             overflow: hidden;
+            /* App-like feel */
         }
-        
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
-        
-        .header h1 {
+
+        /* Header */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brand h1 {
             margin: 0;
-            font-size: 24px;
-        }
-        
-        .stats-bar {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
             display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: #ecf0f1;
-            border-bottom: 1px solid #bdc3c7;
+            align-items: center;
+            gap: 0.5rem;
         }
-        
-        .stat-item {
-            text-align: center;
+
+        .brand span.subtitle {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            padding-left: 0.5rem;
+            border-left: 1px solid var(--border-color);
         }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        
-        .content {
+
+        .stats-pills {
             display: flex;
-            height: calc(100vh - 180px);
-            min-height: 600px;
+            gap: 1rem;
         }
-        
-        .tree-panel {
+
+        .stat-pill {
+            background: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            /* Pill shape */
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-pill span.val {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        .workspace {
             flex: 1;
-            border-right: 1px solid #ecf0f1;
-            padding: 20px;
-            overflow: auto;
-        }
-        
-        .table-panel {
-            flex: 1;
-            padding: 20px;
-            overflow: auto;
-        }
-        
-        .panel-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;
-        }
-        
-        .tree-container {
-            width: 100%;
-            height: calc(100vh - 290px);
-            min-height: 450px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fafafa;
+            display: flex;
             position: relative;
             overflow: hidden;
         }
-        
-        .tree-controls {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+
+        /* Tree Visualization Area */
+        .vis-container {
+            flex: 1;
+            position: relative;
+            background-image:
+                radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+            cursor: grab;
         }
-        
+
+        .vis-container:active {
+            cursor: grabbing;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 400px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.05);
+            z-index: 5;
+            transition: transform 0.3s ease;
+        }
+
+        .panel-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+
+        /* Tasks List Styles */
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: var(--primary-color);
+        }
+
+        .task-card.active {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+            gap: 1rem;
+        }
+
+        .task-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
+            color: var(--text-main);
+            flex: 1;
+        }
+
+        .task-status {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .task-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .task-meta-footer {
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.5rem;
+        }
+
+        .task-id {
+            font-family: 'Monaco', monospace;
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        /* SVG Styles */
         #tree-svg {
             width: 100%;
             height: 100%;
-            display: block;
         }
-        
-        .node {
-            cursor: pointer;
-        }
-        
-        .node circle {
+
+        .node-rect {
+            fill: #fff;
             stroke-width: 2px;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
         }
-        
+
+        .node-rect.highlighted {
+            filter: drop-shadow(0 0 8px var(--primary-glow));
+        }
+
         .node text {
-            font-size: 12px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
-            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            fill: var(--text-main);
+            pointer-events: none;
         }
-        
+
+        .node-title {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .node-id {
+            font-size: 10px;
+            fill: var(--text-secondary);
+            font-family: 'Monaco', monospace;
+        }
+
         .link {
             fill: none;
-            stroke: #ccc;
-            stroke-width: 2px;
+            stroke: #cbd5e1;
+            stroke-width: 1.5px;
+            transition: all 0.3s;
         }
-        
-        .table-container {
-            height: calc(100vh - 290px);
-            min-height: 450px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+
+        /* Controls */
+        .controls {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 0.5rem;
         }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
+
+        .control-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            transition: all 0.2s;
         }
-        
-        th, td {
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+
+        .control-btn:hover {
+            background: #f8fafc;
+            border-color: var(--text-secondary);
         }
-        
-        th {
-            background-color: #34495e;
-            color: white;
-            font-weight: bold;
-            position: sticky;
-            top: 0;
+
+        /* Status Indicators */
+        /* Status Colors */
+        .color-pending {
+            stroke: var(--status-pending);
         }
-        
-        tr:hover {
-            background-color: #f8f9fa;
+
+        .fill-pending {
+            fill: var(--status-pending);
         }
-        
-        .status-pending {
-            color: #f39c12;
-            font-weight: bold;
+
+        .text-pending {
+            color: var(--status-pending);
         }
-        
-        .status-completed {
-            color: #27ae60;
-            font-weight: bold;
+
+        .color-completed {
+            stroke: var(--status-completed);
         }
-        
-        .status-in-progress {
-            color: #3498db;
-            font-weight: bold;
+
+        .fill-completed {
+            fill: var(--status-completed);
         }
-        
-        .highlight {
-            background-color: #fff3cd !important;
+
+        .text-completed {
+            color: var(--status-completed);
         }
-        
-        .validation-status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-size: 14px;
+
+        .color-in-progress {
+            stroke: var(--status-inprogress);
         }
-        
-        .validation-success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+
+        .fill-in-progress {
+            fill: var(--status-inprogress);
         }
-        
-        .validation-warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
+
+        .text-in-progress {
+            color: var(--status-inprogress);
         }
-        
-        .validation-error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+
+        .color-failed {
+            stroke: var(--status-failed);
         }
-        
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #7f8c8d;
+
+        .fill-failed {
+            fill: var(--status-failed);
         }
-        
-        .error {
-            color: #e74c3c;
-            background-color: #fdf2f2;
-            border: 1px solid #e74c3c;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 10px 0;
+
+        .text-failed {
+            color: var(--status-failed);
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌳 任务可视化调试工具</h1>
-            <p>任务树结构展示 & 数据库内容验证</p>
-        </div>
-        
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-value" id="total-tasks">-</div>
-                <div class="stat-label">总任务数</div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="brand">
+                <h1>
+                    <span>✨</span>
+                    CortexPropel
+                    <span class="subtitle">Mission Command</span>
+                </h1>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="tree-tasks">-</div>
-                <div class="stat-label">JSON中的任务</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="db-tasks">-</div>
-                <div class="stat-label">数据库中的任务</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="consistency">-</div>
-                <div class="stat-label">数据一致性</div>
-            </div>
-        </div>
-        
-        <div class="content">
-            <div class="tree-panel">
-                <div class="panel-title">📊 任务树结构 (JSON)</div>
-                <div id="tree-validation" class="validation-status" style="display: none;"></div>
-                <div class="tree-controls">
-                    <button onclick="resetTreeView()" style="padding: 4px 8px; margin-right: 10px; font-size: 12px; cursor: pointer;">重置视图</button>
-                    <span style="font-size: 12px; color: #666;">拖拽移动 | 滚轮缩放</span>
+            <div class="stats-pills">
+                <div class="stat-pill">
+                    <span>Total Tasks</span>
+                    <span class="val" id="total-tasks">-</span>
                 </div>
-                <div class="tree-container">
-                    <svg id="tree-svg"></svg>
+                <div class="stat-pill">
+                    <span>Consistency</span>
+                    <span class="val" id="consistency">-</span>
                 </div>
             </div>
-            
-            <div class="table-panel">
-                <div class="panel-title">📋 任务详情列表 (数据库)</div>
-                <div id="table-validation" class="validation-status" style="display: none;"></div>
-                <div class="table-container">
-                    <table id="tasks-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>标题</th>
-                                <th>状态</th>
-                                <th>描述</th>
-                                <th>创建时间</th>
-                                <th>更新时间</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tasks-tbody">
-                            <tr><td colspan="6" class="loading">加载中...</td></tr>
-                        </tbody>
-                    </table>
+        </header>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Visualization -->
+            <div class="vis-container" id="vis-container">
+                <svg id="tree-svg">
+                    <defs>
+                        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1" />
+                        </filter>
+                    </defs>
+                    <g id="vis-group"></g>
+                </svg>
+
+                <div class="controls">
+                    <button class="control-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                    <button class="control-btn" onclick="zoomOut()" title="Zoom Out">-</button>
+                    <button class="control-btn" onclick="resetZoom()" title="Reset View">⟲</button>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="side-panel">
+                <div class="panel-header">
+                    <h2>Task Details</h2>
+                </div>
+                <div class="panel-content">
+                    <ul class="task-list" id="tasks-list">
+                        <!-- Tasks will be injected here -->
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Global variables
-        let treeData = null;
-        let tasksData = null;
-        let validationData = null;
-        let treeZoom = null;
-        let treeSvg = null;
-        
-        // API base URL
-        const API_BASE = window.location.origin;
-        
-        // Status color mapping
-        const statusColors = {
-            'pending': '#f39c12',
-            'completed': '#27ae60', 
-            'in-progress': '#3498db',
-            'failed': '#e74c3c'
+        // --- Configuration & State ---
+        const config = {
+            nodeWidth: 180,
+            nodeHeight: 60,
+            duration: 750,
+            rootX: 100,
+            rootY: 0 // Will be centered dynamically
         };
-        
-        // Initialize the visualization
-        async function initializeVisualization() {
+
+        const state = {
+            treeData: null,
+            tasksMap: new Map(), // ID -> Task Data
+            zoomTransform: d3.zoomIdentity,
+            svg: null,
+            g: null,
+            zoom: null
+        };
+
+        const statusColors = {
+            'pending': '#f59e0b',
+            'completed': '#10b981',
+            'in-progress': '#3b82f6',
+            'failed': '#ef4444',
+            'unknown': '#94a3b8'
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            initSVG();
+            await loadData();
+        });
+
+        function initSVG() {
+            state.svg = d3.select("#tree-svg");
+            state.g = d3.select("#vis-group");
+
+            // Setup Zoom
+            state.zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on("zoom", (e) => {
+                    state.g.attr("transform", e.transform);
+                    state.zoomTransform = e.transform;
+                });
+
+            state.svg.call(state.zoom);
+
+            // Initial center (approximated, will adjust after render)
+            const container = document.getElementById('vis-container');
+            state.zoom.translateTo(state.svg, 0, container.clientHeight / 2);
+        }
+
+        async function loadData() {
             try {
-                // Load all data
-                await Promise.all([
-                    loadTaskTree(),
-                    loadTasksList(),
-                    loadValidationData()
+                const [treeRes, tasksRes, validateRes] = await Promise.all([
+                    fetch('/api/tree'),
+                    fetch('/api/tasks'),
+                    fetch('/api/validate')
                 ]);
-                
-                // Update UI
-                updateStatistics();
-                renderTree();
-                renderTable();
-                showValidationResults();
-                
-            } catch (error) {
-                showError('初始化失败: ' + error.message);
+
+                const treeJson = await treeRes.json();
+                const tasksJson = await tasksRes.json();
+                const validateJson = await validateRes.json();
+
+                // Process Data
+                state.treeData = treeJson.tree;
+
+                // Build a quick lookup map
+                state.tasksMap.clear();
+                tasksJson.tasks.forEach(t => state.tasksMap.set(t.id, t));
+
+                // Update Stats
+                document.getElementById('total-tasks').textContent = tasksJson.total_count;
+                const consistency = Math.round(validateJson.consistency_score * 100);
+                document.getElementById('consistency').textContent = consistency + '%';
+
+                // Render
+                renderTree(state.treeData);
+                renderTaskList(tasksJson.tasks);
+
+            } catch (err) {
+                console.error("Failed to load data:", err);
+                alert("Failed to load data. See console for details.");
             }
         }
-        
-        // Load task tree data
-        async function loadTaskTree() {
-            try {
-                const response = await fetch(`${API_BASE}/api/tree`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                treeData = data.tree;
-                console.log('Loaded tree data from server:', treeData);
-                console.log('Total tasks reported:', data.total_tasks);
-                document.getElementById('tree-tasks').textContent = data.total_tasks;
-            } catch (error) {
-                console.error('Failed to load task tree:', error);
-                throw new Error('无法加载任务树数据');
-            }
-        }
-        
-        // Load tasks list from database
-        async function loadTasksList() {
-            try {
-                const response = await fetch(`${API_BASE}/api/tasks`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                tasksData = data.tasks;
-                document.getElementById('db-tasks').textContent = data.total_count;
-            } catch (error) {
-                console.error('Failed to load tasks list:', error);
-                throw new Error('无法加载任务列表数据');
-            }
-        }
-        
-        // Load validation data
-        async function loadValidationData() {
-            try {
-                const response = await fetch(`${API_BASE}/api/validate`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                validationData = await response.json();
-                
-                const consistencyPercent = Math.round(validationData.consistency_score * 100);
-                document.getElementById('consistency').textContent = consistencyPercent + '%';
-                
-            } catch (error) {
-                console.error('Failed to load validation data:', error);
-                // Don't fail the whole visualization if validation fails
-                validationData = {
-                    json_only_tasks: [],
-                    db_only_tasks: [],
-                    common_tasks: [],
-                    consistency_score: 0,
-                    issues: ['无法加载验证数据']
-                };
-            }
-        }
-        
-        // Update overall statistics
-        function updateStatistics() {
-            if (tasksData) {
-                document.getElementById('total-tasks').textContent = tasksData.length;
-            }
-        }
-        
-        // Render D3.js tree visualization
-        function renderTree() {
-            if (!treeData) return;
-            
-            console.log('Tree data:', treeData);
-            console.log('Subtasks count:', treeData.subtasks ? treeData.subtasks.length : 0);
-            
-            const container = d3.select('#tree-svg');
-            const containerNode = container.node();
-            const width = containerNode.clientWidth;
-            const height = containerNode.clientHeight;
-            
-            // Clear existing content
-            container.selectAll('*').remove();
-            
-            // Set up SVG with proper dimensions
-            const svg = container
-                .attr('width', width)
-                .attr('height', height);
-            
-            // Create zoom behavior with better parameters
-            treeZoom = d3.zoom()
-                .scaleExtent([0.05, 5])
-                .translateExtent([[-width, -height], [width * 2, height * 2]])
-                .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
-                });
-            
-            svg.call(treeZoom);
-            treeSvg = svg;
-            
-            // Create main group with better initial positioning for horizontal layout
-            const g = svg.append('g')
-                .attr('transform', `translate(50, 50)`);
-            
-            // Create tree layout for horizontal layout (flipped coordinates)
-            const treeLayout = d3.tree()
-                .nodeSize([250, 150])  // [width, height] - increased for better text spacing
-                .separation((a, b) => {
-                    // Better separation for different depths - more space between nodes
-                    return (a.parent == b.parent ? 1.5 : 2.5);
-                });
-            
-            // Create hierarchy with proper children accessor
-            const root = d3.hierarchy(treeData, d => d.subtasks);
-            
-            console.log('Hierarchy created:', root);
-            console.log('Descendants count:', root.descendants().length);
-            
-            // Apply tree layout
-            const treeDataProcessed = treeLayout(root);
-            
-            console.log('First few node positions:');
-            treeDataProcessed.descendants().slice(0, 5).forEach((d, i) => {
-                console.log(`Node ${i}: x=${d.x}, y=${d.y}, title=${d.data.title}`);
+
+        // --- Tree Rendering ---
+        function renderTree(data) {
+            const root = d3.hierarchy(data, d => d.subtasks);
+
+            // Calculate layout dimensions
+            // Horizontal layout: height depends on number of leaves, width on depth
+            const dx = 50; // vertical spacing between nodes (was config.nodeHeight + 30)
+            const dy = 300; // horizontal spacing between levels (widened for adaptive widths)
+
+            // Use d3.tree
+            // Note: d3.tree().nodeSize([height, width]) because coordinates are flipped later? 
+            // Actually, let's keep it simple. d3.tree creates x/y.
+            // We want horizontal: Root at Left. 
+            // In d3.tree, 'x' is usually vertical (top-to-bottom flow), 'y' is depth.
+            // If we swap x and y in rendering, we get horizontal.
+
+            const tree = d3.tree().nodeSize([dx, dy]);
+            tree(root);
+
+            // 1. Pre-calculate widths for all nodes
+            root.descendants().forEach(d => {
+                const title = d.data.title || "Untitled";
+                // Estimate width: approx 14px per char + 40px padding
+                // Cap min width at 120px, max at 400px
+                d.width = Math.min(400, Math.max(120, title.length * 15 + 40));
+                d.height = 40; // Fixed height
             });
-            
-            // Calculate bounds and center the tree for horizontal layout
-            const allNodes = treeDataProcessed.descendants();
-            const xExtent = d3.extent(allNodes, d => d.x);
-            const yExtent = d3.extent(allNodes, d => d.y);
-            const treeWidth = xExtent[1] - xExtent[0];
-            const treeHeight = yExtent[1] - yExtent[0];
-            
-            // Center the tree horizontally in the viewport
-            const scale = Math.min(width / (treeWidth + 300), height / (treeHeight + 200)) * 0.9;
-            const translateX = 50; // Start from left with margin
-            const translateY = (height - treeHeight * scale) / 2 - yExtent[0] * scale;
-            
-            // Apply initial transform to center the tree
-            const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
-            svg.call(treeZoom.transform, initialTransform);
-            
-            // Add links - use horizontal layout (flipped coordinates)
-            const links = treeDataProcessed.links();
-            console.log('Links count:', links.length);
-            
-            const link = g.append('g')
-                .selectAll('.link')
-                .data(links)
-                .enter().append('path')
-                .attr('class', 'link')
-                .attr('d', d3.linkHorizontal()
-                    .x(d => d.y)  // Flip x and y for horizontal layout
-                    .y(d => d.x));
-            
-            // Add nodes - use flipped coordinates for horizontal layout
-            const descendants = treeDataProcessed.descendants();
-            console.log('Nodes count:', descendants.length);
-            
-            const node = g.append('g')
-                .selectAll('.node')
-                .data(descendants)
-                .enter().append('g')
-                .attr('class', 'node')
-                .attr('transform', d => `translate(${d.y}, ${d.x})`)  // Flip x and y for horizontal
-            
-            // Add circles
-            node.append('circle')
-                .attr('r', 8)
-                .attr('fill', d => {
-                    const status = d.data.status || 'pending';
-                    return statusColors[status] || statusColors.pending;
-                })
-                .attr('stroke', d => {
-                    const taskId = d.data.id || '';
-                    // Highlight tasks that only exist in JSON
-                    if (validationData && validationData.json_only_tasks.includes(taskId)) {
-                        return '#e74c3c';
-                    }
-                    return '#fff';
-                })
-                .on('click', (event, d) => {
-                    highlightTaskInTable(d.data.id);
-                });
-            
-            // Add labels for horizontal layout - position to the right of nodes
-            node.append('text')
-                .attr('dy', '0.31em')
-                .attr('x', 12)
-                .attr('text-anchor', 'start')
-                .text(d => d.data.title || d.data.id || 'Unknown')
-                .style('font-size', '12px')
-                .style('fill', '#2c3e50')
-                .style('font-weight', '500');
-            
-            // Add tooltips
-            node.append('title')
-                .text(d => {
-                    const title = d.data.title || 'No title';
-                    const id = d.data.id || 'No ID';
-                    const status = d.data.status || 'pending';
-                    const desc = d.data.description || 'No description';
-                    return `${title}\nID: ${id}\nStatus: ${status}\n${desc}`;
-                });
-        }
-        
-        // Render tasks table
-        function renderTable() {
-            if (!tasksData) return;
-            
-            const tbody = document.getElementById('tasks-tbody');
-            
-            if (tasksData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #7f8c8d;">暂无任务数据</td></tr>';
-                return;
+
+            // 2. Compute tree layout (gives us x and initial y)
+            tree(root);
+
+            // 3. Adjust horizontal spacing (y) based on max width per level to prevent overlap
+            const levelWidths = {};
+            const levelGap = 80; // Gap between levels
+
+            // Find max width for each depth
+            root.descendants().forEach(d => {
+                const depth = d.depth;
+                levelWidths[depth] = Math.max(levelWidths[depth] || 0, d.width);
+            });
+
+            // Calculate cumulative offset for each depth
+            const levelOffsets = {};
+            let currentOffset = 0;
+            // Assuming max depth is reasonable
+            const maxDepth = Math.max(...Object.keys(levelWidths).map(Number));
+
+            for (let i = 0; i <= maxDepth; i++) {
+                levelOffsets[i] = currentOffset;
+                // Next level starts after this level's max width + gap
+                currentOffset += (levelWidths[i] || 0) + levelGap;
             }
-            
-            tbody.innerHTML = tasksData.map(task => {
-                const status = task.status || 'pending';
-                const statusClass = `status-${status}`;
-                
-                // Check if this task only exists in database
-                let rowClass = '';
-                if (validationData && validationData.db_only_tasks.includes(task.id)) {
-                    rowClass = 'style="background-color: #ffebee;"';
-                }
-                
+
+            // Apply new y coordinates
+            root.descendants().forEach(d => {
+                d.y = levelOffsets[d.depth];
+            });
+
+            // Compute global min/max to auto-center
+            let x0 = Infinity;
+            let x1 = -x0;
+            root.each(d => {
+                if (d.x > x1) x1 = d.x;
+                if (d.x < x0) x0 = d.x;
+            });
+
+            // Adjust root vertical position to center it
+            // After swap: d.x -> vertical (y), d.y -> horizontal (x)
+
+            // Create links
+            const links = state.g.selectAll(".link")
+                .data(root.links())
+                .join("path")
+                .attr("class", "link")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y)
+                    .y(d => d.x)
+                );
+
+            const node = state.g.selectAll(".node")
+                .data(root.descendants())
+                .join("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`)
+                .on("click", (e, d) => scrollToTask(d.data.id));
+
+            // We use 'each' to have context for measuring text if needed, 
+            // but for simplicity and performance in this update, we will use estimation.
+
+            node.each(function (d) {
+                const g = d3.select(this);
+                const title = d.data.title || "Untitled";
+                // Estimate width: approx 14px per char + 40px padding
+                // Cap min width at 100px, max at 400px
+                const estimatedWidth = Math.min(400, Math.max(120, title.length * 15 + 40));
+                const height = 40;
+
+                // Background Rectangle (Simple Light Blue Pill)
+                g.append("rect")
+                    .attr("class", "node-rect")
+                    .attr("rx", 20) // Fully rounded ends
+                    .attr("ry", 20)
+                    .attr("width", estimatedWidth)
+                    .attr("height", height)
+                    .attr("x", 0)
+                    .attr("y", -height / 2)
+                    .style("fill", "#e1f5fe") // Light Blue 50
+                    .style("stroke", "#039be5") // Light Blue 600
+                    .style("stroke-width", "2px");
+
+                // Status Indicator (Small colored dot on the left)
+                g.append("circle")
+                    .attr("cx", 20)
+                    .attr("cy", 0)
+                    .attr("r", 6)
+                    .attr("fill", statusColors[d.data.status || 'unknown']);
+
+                // Text: Title
+                g.append("text")
+                    .attr("class", "node-title")
+                    .attr("x", 35) // After the dot
+                    .attr("y", 5) // Centered vertically
+                    .text(title)
+                    .style("font-size", "14px")
+                    .style("font-weight", "500")
+                    .style("fill", "#01579b"); // Dark Blue text
+            });
+
+            // Auto-Layout: Center the tree
+            const container = document.getElementById('vis-container');
+            const h = container.clientHeight;
+            const w = container.clientWidth;
+
+            // Initial transform
+            // We want the root (which is at y=0, x=some_center) to be at the left-middle.
+            // d.y is horizontal (starts at 0), d.x is vertical (centered around 0ish)
+
+            // If the tree is large, d.x can range from -Large to +Large.
+            // We want to translate such that the root node is at (50, h/2).
+            const initialScale = 0.9;
+            const transX = 50;
+            const transY = h / 2 - root.x; // Shift by root's x-coordinate to center it?
+            // Actually, d3.tree centers children. Root x is usually the midpoint of first and last child.
+            // Wait, d3.tree with nodeSize lays out relative to (0,0) usually.
+            // Let's just rely on zoomToFit logic if we had one, but let's try a simple center.
+
+            state.svg.call(state.zoom.transform, d3.zoomIdentity.translate(50, h / 2).scale(0.8));
+        }
+
+        // --- List Rendering ---
+        function renderTaskList(tasks) {
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = tasks.map(t => {
+                const status = t.status || 'unknown';
                 return `
-                    <tr ${rowClass} data-task-id="${task.id}">
-                        <td><code>${task.id}</code></td>
-                        <td>${task.title || '无标题'}</td>
-                        <td><span class="${statusClass}">${status}</span></td>
-                        <td>${task.description || '无描述'}</td>
-                        <td>${formatDate(task.created_at)}</td>
-                        <td>${formatDate(task.updated_at)}</td>
-                    </tr>
+                    <li class="task-card" id="card-${t.id}" onclick="focusNode('${t.id}')">
+                        <div class="task-header">
+                            <h3 class="task-title">${t.title || 'Untitled Task'}</h3>
+                            <span class="task-status text-${status}">${status}</span>
+                        </div>
+                        <div class="task-desc">
+                            ${truncate(t.description || '', 80)}
+                        </div>
+                        <div class="task-meta-footer">
+                            <span class="task-id">ID: ${t.id}</span>
+                        </div>
+                    </li>
                 `;
             }).join('');
         }
-        
-        // Highlight task in table
-        function highlightTaskInTable(taskId) {
-            // Remove previous highlights
-            document.querySelectorAll('#tasks-tbody tr').forEach(row => {
-                row.classList.remove('highlight');
-            });
-            
-            // Highlight the clicked task
-            const targetRow = document.querySelector(`tr[data-task-id="${taskId}"]`);
-            if (targetRow) {
-                targetRow.classList.add('highlight');
-                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // --- Interactions ---
+        function truncate(str, n) {
+            return (str && str.length > n) ? str.substr(0, n - 1) + '&hellip;' : str;
+        }
+
+        function scrollToTask(id) {
+            // Highlight in list
+            const card = document.getElementById(`card-${id}`);
+            if (card) {
+                document.querySelectorAll('.task-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-        
-        // Show validation results
-        function showValidationResults() {
-            if (!validationData) return;
-            
-            // Tree panel validation
-            const treeValidation = document.getElementById('tree-validation');
-            if (validationData.json_only_tasks.length > 0) {
-                treeValidation.className = 'validation-status validation-warning';
-                treeValidation.innerHTML = `⚠️ JSON中存在但数据库中不存在的任务: ${validationData.json_only_tasks.length}个`;
-                treeValidation.style.display = 'block';
-            }
-            
-            // Table panel validation  
-            const tableValidation = document.getElementById('table-validation');
-            if (validationData.db_only_tasks.length > 0) {
-                tableValidation.className = 'validation-status validation-error';
-                tableValidation.innerHTML = `❌ 数据库中存在但JSON中不存在的任务: ${validationData.db_only_tasks.length}个`;
-                tableValidation.style.display = 'block';
-            }
-            
-            // Overall validation status
-            if (validationData.issues.length === 0) {
-                // No issues found
-                const overallStatus = document.createElement('div');
-                overallStatus.className = 'validation-status validation-success';
-                overallStatus.innerHTML = '✅ 数据一致性检查通过';
-                document.querySelector('.header').appendChild(overallStatus);
-            }
+
+        function focusNode(id) {
+            // Find node in tree
+            // Since we don't have a direct map from ID to D3 Node, we search. Not efficient but fine for small trees.
+            // Or we could have indexed it.
+            // Let's just log for now or try to finding it
+            // console.log("Focusing node", id);
         }
-        
-        // Utility functions
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleString('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch {
-                return dateString;
-            }
+
+        function zoomIn() {
+            state.svg.transition().call(state.zoom.scaleBy, 1.2);
         }
-        
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.textContent = message;
-            document.body.insertBefore(errorDiv, document.body.firstChild);
+
+        function zoomOut() {
+            state.svg.transition().call(state.zoom.scaleBy, 0.8);
         }
-        
-        // Reset tree view to initial centered position for horizontal layout
-        function resetTreeView() {
-            if (treeSvg && treeZoom) {
-                const container = d3.select('#tree-svg');
-                const containerNode = container.node();
-                const width = containerNode.clientWidth;
-                const height = containerNode.clientHeight;
-                
-                // Get current tree data to recalculate bounds
-                if (treeData) {
-                    const treeLayout = d3.tree()
-                        .nodeSize([250, 150])  // Horizontal layout parameters
-                        .separation((a, b) => (a.parent == b.parent ? 1.5 : 2.5));
-                    
-                    const root = d3.hierarchy(treeData, d => d.subtasks);
-                    const treeDataProcessed = treeLayout(root);
-                    
-                    const allNodes = treeDataProcessed.descendants();
-                    const xExtent = d3.extent(allNodes, d => d.x);
-                    const yExtent = d3.extent(allNodes, d => d.y);
-                    const treeWidth = xExtent[1] - xExtent[0];
-                    const treeHeight = yExtent[1] - yExtent[0];
-                    
-                    // Center the tree horizontally
-                    const scale = Math.min(width / (treeWidth + 300), height / (treeHeight + 200)) * 0.9;
-                    const translateX = 50; // Start from left with margin
-                    const translateY = (height - treeHeight * scale) / 2 - yExtent[0] * scale;
-                    
-                    // Apply transform with smooth transition
-                    const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
-                    treeSvg.transition().duration(750).call(treeZoom.transform, initialTransform);
-                }
-            }
+
+        function resetZoom() {
+            const container = document.getElementById('vis-container');
+            state.svg.transition().call(state.zoom.transform,
+                d3.zoomIdentity.translate(50, container.clientHeight / 2).scale(0.8));
         }
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', initializeVisualization);
+
     </script>
 </body>
+
 </html>

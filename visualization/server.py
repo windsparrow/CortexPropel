@@ -18,16 +18,26 @@ from pydantic import BaseModel
 # Add parent directory to path to import src modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.task_manager import TaskManager
+# from src.task_manager import TaskManager
 from src.database import TaskDatabase
 
 app = FastAPI(title="Task Visualization Server", version="1.0.0")
 
-# Initialize task manager and database with correct paths
+# Initialize database with correct paths
 # Use main data folder instead of visualization/data
-task_manager = TaskManager()
-task_manager.task_tree_file = str(Path(__file__).parent.parent / "data" / "task_tree.json")
+task_tree_file = Path(__file__).parent.parent / "data" / "task_tree.json"
 database = TaskDatabase(db_path=str(Path(__file__).parent.parent / "data" / "tasks.db"))
+
+def load_task_tree_local():
+    """Load task tree directly from JSON file."""
+    try:
+        if task_tree_file.exists():
+            with open(task_tree_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {"subtasks": []} # Fallback
+    except Exception as e:
+        print(f"Error loading task tree: {e}")
+        return {"subtasks": []}
 
 class TaskTreeResponse(BaseModel):
     """Response model for task tree data."""
@@ -59,7 +69,7 @@ async def read_index():
 async def get_task_tree():
     """Get the current task tree from JSON file."""
     try:
-        tree = task_manager.load_task_tree()
+        tree = load_task_tree_local()
         
         # Calculate tree statistics
         def count_tasks(node: Dict[str, Any]) -> int:
@@ -108,7 +118,7 @@ async def validate_data_consistency():
     """Compare task tree JSON with database and check consistency."""
     try:
         # Get task tree from JSON
-        tree = task_manager.load_task_tree()
+        tree = load_task_tree_local()
         
         # Get all task IDs from tree
         def extract_task_ids(node: Dict[str, Any]) -> List[str]:

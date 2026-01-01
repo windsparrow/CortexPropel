@@ -9,19 +9,6 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Install requirements if needed
-if [ ! -f "venv" ]; then
-    echo "📦 创建虚拟环境..."
-    python3 -m venv venv
-fi
-
-# Activate virtual environment
-source venv/bin/activate
-
-# Install requirements
-echo "📦 安装依赖..."
-pip install -r requirements.txt
-
 # Start the server
 echo "🚀 启动服务器..."
 echo "📍 访问地址: http://localhost:8000"

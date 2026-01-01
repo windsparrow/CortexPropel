@@ -15,8 +15,13 @@ except ImportError:
 class TaskDatabase:
     """SQLite database manager for task metadata."""
     
-    def __init__(self, db_path: str = "data/tasks.db"):
-        self.db_path = Path(db_path)
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            # Use absolute path relative to this file
+            self.db_path = Path(__file__).parent.parent / "data" / "tasks.db"
+        else:
+            self.db_path = Path(db_path)
+            
         self.db_path.parent.mkdir(exist_ok=True)
         self.init_database()
     
