@@ -4,43 +4,96 @@
   "description": "Main project task",
   "status": "pending",
   "created_at": "2025-12-27T10:00:00Z",
-  "updated_at": "2025-12-27T10:00:04Z",
+  "updated_at": "2025-12-27T10:00:13Z",
   "subtasks": [
     {
-      "id": "3742ec96-28d5-4f22-974f-1d2285ed12aa",
-      "title": "Implement project structure",
-      "description": "Set up project directory structure, including src, docs, tests, and configuration files.",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:00Z",
-      "updated_at": "2025-12-27T10:00:01Z",
-      "subtasks": [
-        {
-          "id": "f4dc2e74-27d9-418b-b4d8-5384625ff1ae",
-          "title": "Create configuration files and load model settings",
-          "description": "Create configuration files and load model settings.",
-          "status": "pending",
-          "created_at": "2025-12-27T10:00:02Z",
-          "updated_at": "2025-12-27T10:00:02Z",
-          "subtasks": []
-        }
-      ]
+      "id": "4faa5d86-a571-4535-a5a5-25b27eeacf72",
+      "title": "编写用户手册",
+      "description": "Create a detailed user manual for the project",
+      "status": "in_progress",
+      "created_at": "2025-12-27T10:00:01Z",
+      "updated_at": "2025-12-27T10:00:02Z",
+      "subtasks": []
     },
     {
-      "id": "7e21d037-6437-4cb0-824a-d4c123b10358",
-      "title": "Write unit tests for task processing",
-      "description": "Develop and implement unit tests for the task processing functionality to validate reliability and correctness of task management operations.",
+      "id": "1eb2ee11-5090-4311-b24d-0b5251b438b2",
+      "title": "查看当前所有任务",
+      "description": "Review and list all current tasks in the project",
       "status": "pending",
       "created_at": "2025-12-27T10:00:03Z",
       "updated_at": "2025-12-27T10:00:03Z",
       "subtasks": []
     },
     {
-      "id": "c062f6c4-f2c9-4b80-bcd4-71ddd7f917eb",
-      "title": "明天上午8点去公司开会",
-      "description": "Attend a meeting at the company at 8 AM tomorrow morning",
+      "id": "9d86f520-eb41-4105-8af6-9f11aed4fffa",
+      "title": "查看当前所有任务",
+      "description": "Review and list all current tasks in the project",
       "status": "pending",
-      "created_at": "2025-12-27T10:00:04Z",
-      "updated_at": "2025-12-27T10:00:04Z",
+      "created_at": "2025-12-27T10:00:05Z",
+      "updated_at": "2025-12-27T10:00:05Z",
+      "subtasks": []
+    },
+    {
+      "id": "57dd0400-d845-4973-a06e-b7fb713da1a0",
+      "title": "分析当前进度",
+      "description": "Analyze the current progress of the project tasks",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:06Z",
+      "updated_at": "2025-12-27T10:00:06Z",
+      "subtasks": []
+    },
+    {
+      "id": "4d8a75d0-a280-4a3a-a980-1092dc2537bf",
+      "title": "测试树状图更新",
+      "description": "Test the update functionality of the task tree structure",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:07Z",
+      "updated_at": "2025-12-27T10:00:07Z",
+      "subtasks": []
+    },
+    {
+      "id": "9422cd46-69b6-44aa-974e-cbeb4019ef34",
+      "title": "English Tree Test",
+      "description": "Test the English language support in the task tree structure",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:08Z",
+      "updated_at": "2025-12-27T10:00:08Z",
+      "subtasks": []
+    },
+    {
+      "id": "faa25082-2ec8-4bbc-a974-6e7e0e016965",
+      "title": "solve the bug in the software",
+      "description": "Identify and resolve bugs in the software application",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:09Z",
+      "updated_at": "2025-12-27T10:00:09Z",
+      "subtasks": []
+    },
+    {
+      "id": "2ff9d692-8f5a-4c21-9de1-b0ff0edfede2",
+      "title": "CLI测试任务：验证路径问题",
+      "description": "Test the CLI functionality to verify path issues in the task tree structure",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:10Z",
+      "updated_at": "2025-12-27T10:00:10Z",
+      "subtasks": []
+    },
+    {
+      "id": "16365c3d-7f66-43f8-9d7e-a93b868e006f",
+      "title": "Web测试：重启后添加任务",
+      "description": "Test web functionality: adding tasks after system restart",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:11Z",
+      "updated_at": "2025-12-27T10:00:11Z",
+      "subtasks": []
+    },
+    {
+      "id": "795e5bd4-40b5-4799-81e9-eff1df25f2f2",
+      "title": "明天带小猫去做绝育",
+      "description": "明天带小猫去宠物医院做绝育手术",
+      "status": "pending",
+      "created_at": "2025-12-27T10:00:12Z",
+      "updated_at": "2025-12-27T10:00:12Z",
       "subtasks": []
     }
   ]

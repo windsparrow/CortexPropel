@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -11,7 +12,9 @@ class Config:
     MODEL_BASE_URL = os.getenv("MODEL_BASE_URL", "")
     
     # Task Tree Configuration
-    TASK_TREE_FILE = os.getenv("TASK_TREE_FILE", "data/task_tree.json")
+    # Use absolute path to ensure we always use the project root data folder
+    _PROJECT_ROOT = Path(__file__).parent.parent
+    TASK_TREE_FILE = str(_PROJECT_ROOT / "data" / "task_tree.json")
     
     # LLM Configuration
     TEMPERATURE = 0.1

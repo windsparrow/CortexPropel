@@ -8,7 +8,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -18,7 +18,7 @@ from pydantic import BaseModel
 # Add parent directory to path to import src modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# from src.task_manager import TaskManager
+from src.task_manager import TaskManager
 from src.database import TaskDatabase
 
 app = FastAPI(title="Task Visualization Server", version="1.0.0")
@@ -27,6 +27,7 @@ app = FastAPI(title="Task Visualization Server", version="1.0.0")
 # Use main data folder instead of visualization/data
 task_tree_file = Path(__file__).parent.parent / "data" / "task_tree.json"
 database = TaskDatabase(db_path=str(Path(__file__).parent.parent / "data" / "tasks.db"))
+task_manager = TaskManager()  # Initialize TaskManager for chat functionality
 
 def load_task_tree_local():
     """Load task tree directly from JSON file."""
@@ -58,6 +59,18 @@ class ValidationResponse(BaseModel):
     common_tasks: List[str]
     consistency_score: float
     issues: List[str]
+
+class ChatRequest(BaseModel):
+    """Request model for chat messages."""
+    message: str
+
+class ChatResponse(BaseModel):
+    """Response model for chat interactions."""
+    success: bool
+    message: str
+    tree: Dict[str, Any]
+    tasks: List[Dict[str, Any]]
+    error: Optional[str] = None
 
 @app.get("/")
 async def read_index():
@@ -163,6 +176,40 @@ async def validate_data_consistency():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error validating data: {str(e)}")
+
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat_with_llm(request: ChatRequest):
+    """Process chat message and update task tree."""
+    try:
+        # Process user input through TaskManager
+        # This updates the task_tree.json file
+        task_manager.process_user_input(request.message)
+        
+        # Reload the complete tree from file to ensure consistency
+        # This is important because LLM might return incomplete tree
+        complete_tree = load_task_tree_local()
+        
+        # Get updated task list from database
+        tasks = database.get_all_tasks()
+        
+        return ChatResponse(
+            success=True,
+            message="任务已更新",
+            tree=complete_tree,
+            tasks=tasks
+        )
+    except Exception as e:
+        # On error, still return current state
+        current_tree = load_task_tree_local()
+        current_tasks = database.get_all_tasks()
+        
+        return ChatResponse(
+            success=False,
+            message=f"处理失败: {str(e)}",
+            tree=current_tree,
+            tasks=current_tasks,
+            error=str(e)
+        )
 
 @app.get("/api/task/{task_id}")
 async def get_task_details(task_id: str):
