@@ -29,13 +29,15 @@ class TaskManager:
         Returns:
             The initial task tree as a dictionary
         """
+        from datetime import datetime
+        now = datetime.now().isoformat()
         return {
             "id": "root",
             "title": "Root Task",
             "description": "Main project task",
             "status": "pending",
-            "created_at": "2025-12-27T10:00:00Z",
-            "updated_at": "2025-12-27T10:00:00Z",
+            "created_at": now,
+            "updated_at": now,
             "subtasks": []
         }
     

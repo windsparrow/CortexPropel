@@ -79,27 +79,81 @@
             border-left: 1px solid var(--border-color);
         }
 
-        .stats-pills {
+        .header-actions {
             display: flex;
             gap: 1rem;
         }
 
-        .stat-pill {
+        .reset-btn {
             background: #fff;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            /* Pill shape */
+            color: var(--text-secondary);
             border: 1px solid var(--border-color);
-            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
             display: flex;
-            gap: 0.5rem;
             align-items: center;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
 
-        .stat-pill span.val {
-            font-weight: 600;
-            color: var(--primary-color);
+        .reset-btn:hover {
+            background: #f8fafc;
+            border-color: var(--text-secondary);
+            color: var(--text-main);
+        }
+
+        .reset-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
         }
 
         /* Main Content */
@@ -130,7 +184,7 @@
 
         .message.user .message-time {
             text-align: right;
-            color: rgba(255, 255, 255, 0.7);
+            color: #667eea;
         }
 
         .message.assistant .message-time {
@@ -190,7 +244,7 @@
         }
 
         .message-bubble {
-            max-width: 70%;
+            max-width: 90%;
             padding: 0.75rem 1rem;
             border-radius: 12px;
             line-height: 1.5;
@@ -561,15 +615,10 @@
                     <span class="subtitle">Mission Command</span>
                 </h1>
             </div>
-            <div class="stats-pills">
-                <div class="stat-pill">
-                    <span>Total Tasks</span>
-                    <span class="val" id="total-tasks">-</span>
-                </div>
-                <div class="stat-pill">
-                    <span>Consistency</span>
-                    <span class="val" id="consistency">-</span>
-                </div>
+            <div class="header-actions">
+                <button id="reset-btn" class="reset-btn" onclick="resetTaskTree()">
+                    Reset
+                </button>
             </div>
         </header>
 
@@ -659,6 +708,70 @@
             await loadData();
             initChat();
         });
+
+        // --- Toast Notification ---
+        function showToast(message, type = 'success') {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(t => t.remove());
+
+            // Create new toast
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // --- Reset Task Tree ---
+        async function resetTaskTree() {
+            const resetBtn = document.getElementById('reset-btn');
+
+            // Confirm action
+            if (!confirm('确定要重置所有任务数据吗？此操作不可撤销。')) {
+                return;
+            }
+
+            resetBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast('✓ Reset 成功！任务树已重置', 'success');
+
+                    // Clear chat history
+                    chatHistory = [];
+                    document.getElementById('chat-messages').innerHTML = '';
+                    await fetch('/api/chat/history', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ messages: [] })
+                    });
+
+                    // Reload data
+                    await loadData();
+                } else {
+                    showToast('✗ Reset 失败: ' + (data.detail || data.message), 'error');
+                }
+            } catch (error) {
+                console.error('Reset error:', error);
+                showToast('✗ Reset 失败: 网络错误', 'error');
+            } finally {
+                resetBtn.disabled = false;
+            }
+        }
 
         // --- Chat Functions ---
         let chatHistory = [];
@@ -770,8 +883,6 @@
                     renderTree(data.tree);
                     renderTaskList(data.tasks);
 
-                    // Update stats
-                    document.getElementById('total-tasks').textContent = data.tasks.length;
                 } else {
                     const errorTimestamp = new Date().toISOString();
                     const errorMsg = `错误: ${data.error || '处理失败'}`;
@@ -885,10 +996,6 @@
                 state.tasksMap.clear();
                 tasksJson.tasks.forEach(t => state.tasksMap.set(t.id, t));
 
-                // Update Stats
-                document.getElementById('total-tasks').textContent = tasksJson.total_count;
-                const consistency = Math.round(validateJson.consistency_score * 100);
-                document.getElementById('consistency').textContent = consistency + '%';
 
                 // Render
                 renderTree(state.treeData);

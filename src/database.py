@@ -78,28 +78,41 @@ class TaskDatabase:
                     existing_task = cursor.fetchone()
                 
                 if existing_task:
-                    # Update existing task - use task_data values or existing values
+                    # Update existing task - use task_data values, then json_data, then existing values
+                    new_title = task_data.get('title') or json_data.get('title') or existing_task['title']
+                    new_description = task_data.get('description') or json_data.get('description') or existing_task['description']
+                    new_status = task_data.get('status') or json_data.get('status') or existing_task['status']
+                    new_priority = task_data.get('priority') or json_data.get('priority') or existing_task['priority']
+                    
+                    # Check if any critical field has changed to determine if updated_at should change
+                    has_changes = (
+                        new_title != existing_task['title'] or
+                        new_description != existing_task['description'] or
+                        new_status != existing_task['status'] or
+                        new_priority != existing_task['priority']
+                    )
+                    
                     merged_data = {
                         'id': task_id,
-                        'title': task_data.get('title', existing_task['title']),
-                        'description': task_data.get('description', existing_task['description']),
-                        'status': task_data.get('status', existing_task['status']),
-                        'priority': task_data.get('priority', existing_task['priority']),
-                        'planned_start_time': task_data.get('planned_start_time', existing_task['planned_start_time']),
-                        'planned_end_time': task_data.get('planned_end_time', existing_task['planned_end_time']),
-                        'actual_start_time': task_data.get('actual_start_time', existing_task['actual_start_time']),
-                        'actual_end_time': task_data.get('actual_end_time', existing_task['actual_end_time']),
-                        'assigned_to': task_data.get('assigned_to', existing_task['assigned_to']),
-                        'created_by': task_data.get('created_by', existing_task['created_by']),
-                        'tags': json.dumps(task_data.get('tags', json.loads(existing_task['tags'] or '[]'))),
-                        'progress': task_data.get('progress', existing_task['progress']),
-                        'estimated_hours': task_data.get('estimated_hours', existing_task['estimated_hours']),
-                        'actual_hours': task_data.get('actual_hours', existing_task['actual_hours']),
-                        'dependencies': json.dumps(task_data.get('dependencies', json.loads(existing_task['dependencies'] or '[]'))),
-                        'category': task_data.get('category', existing_task['category']),
-                        'notes': task_data.get('notes', existing_task['notes']),
+                        'title': new_title,
+                        'description': new_description,
+                        'status': new_status,
+                        'priority': new_priority,
+                        'planned_start_time': task_data.get('planned_start_time') or json_data.get('planned_start_time') or existing_task['planned_start_time'],
+                        'planned_end_time': task_data.get('planned_end_time') or json_data.get('planned_end_time') or existing_task['planned_end_time'],
+                        'actual_start_time': task_data.get('actual_start_time') or json_data.get('actual_start_time') or existing_task['actual_start_time'],
+                        'actual_end_time': task_data.get('actual_end_time') or json_data.get('actual_end_time') or existing_task['actual_end_time'],
+                        'assigned_to': task_data.get('assigned_to') or json_data.get('assigned_to') or existing_task['assigned_to'],
+                        'created_by': task_data.get('created_by') or json_data.get('created_by') or existing_task['created_by'],
+                        'tags': json.dumps(task_data.get('tags') or json_data.get('tags') or json.loads(existing_task['tags'] or '[]')),
+                        'progress': task_data.get('progress') if task_data.get('progress') is not None else (json_data.get('progress') if json_data.get('progress') is not None else existing_task['progress']),
+                        'estimated_hours': task_data.get('estimated_hours') or json_data.get('estimated_hours') or existing_task['estimated_hours'],
+                        'actual_hours': task_data.get('actual_hours') or json_data.get('actual_hours') or existing_task['actual_hours'],
+                        'dependencies': json.dumps(task_data.get('dependencies') or json_data.get('dependencies') or json.loads(existing_task['dependencies'] or '[]')),
+                        'category': task_data.get('category') or json_data.get('category') or existing_task['category'],
+                        'notes': task_data.get('notes') or json_data.get('notes') or existing_task['notes'],
                         'created_at': existing_task['created_at'],
-                        'updated_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat() if has_changes else existing_task['updated_at'],
                         'json_data': json.dumps(json_data, ensure_ascii=False) if json_data else existing_task['json_data']
                     }
                 else:

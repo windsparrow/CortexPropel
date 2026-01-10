@@ -7,6 +7,8 @@ Provides read-only endpoints to inspect task tree and database.
 import json
 import os
 import sys
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -14,6 +16,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
+# Configure logging with timestamp
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path to import src modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -39,7 +49,7 @@ def load_task_tree_local():
                 return json.load(f)
         return {"subtasks": []} # Fallback
     except Exception as e:
-        print(f"Error loading task tree: {e}")
+        logger.error(f"Error loading task tree: {e}")
         return {"subtasks": []}
 
 class TaskTreeResponse(BaseModel):
@@ -240,9 +250,60 @@ async def get_task_details(task_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading task details: {str(e)}")
 
+@app.post("/api/reset")
+async def reset_task_tree():
+    """Reset the task tree and database to initial state."""
+    try:
+        # Reset task tree using TaskManager
+        reset_tree = task_manager.reset_task_tree()
+        logger.info("Task tree reset successfully")
+        
+        return {
+            "success": True,
+            "message": "任务树已重置",
+            "tree": reset_tree
+        }
+    except Exception as e:
+        logger.error(f"Error resetting task tree: {e}")
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    
+    # Custom uvicorn log config with timestamps
+    log_config = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s [%(levelname)s] %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+            "access": {
+                "format": "%(asctime)s [%(levelname)s] %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "default": {
+                "formatter": "default",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
+            },
+            "access": {
+                "formatter": "access",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+            },
+        },
+        "loggers": {
+            "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "uvicorn.error": {"level": "INFO"},
+            "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+        },
+    }
+    
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True, log_config=log_config)
 @app.get("/api/chat/history", response_model=ChatHistoryResponse)
 async def get_chat_history():
     """Get chat history from file."""
@@ -253,7 +314,7 @@ async def get_chat_history():
                 return ChatHistoryResponse(messages=data.get("messages", []))
         return ChatHistoryResponse(messages=[])
     except Exception as e:
-        print(f"Error loading chat history: {e}")
+        logger.error(f"Error loading chat history: {e}")
         return ChatHistoryResponse(messages=[])
 
 @app.post("/api/chat/history")

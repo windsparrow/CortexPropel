@@ -3,115 +3,35 @@
   "title": "Root Task",
   "description": "Main project task",
   "status": "pending",
-  "created_at": "2025-12-27T10:00:00Z",
-  "updated_at": "2025-12-27T10:00:14Z",
+  "created_at": "2026-01-10T23:59:51.198818",
+  "updated_at": "2026-01-11T00:15:30Z",
   "subtasks": [
     {
-      "id": "4faa5d86-a571-4535-a5a5-25b27eeacf72",
-      "title": "编写用户手册",
-      "description": "Create a detailed user manual for the project",
-      "status": "in_progress",
-      "created_at": "2025-12-27T10:00:01Z",
-      "updated_at": "2025-12-27T10:00:02Z",
-      "subtasks": []
+      "id": "0b6d384a-9dbd-433a-9779-bec6d6cac36e",
+      "title": "新项目需要首先把思路理清楚，输出一个产品设计的方案",
+      "description": "理清楚项目思路，完成产品设计方案的输出，为项目开发做前期准备",
+      "status": "pending",
+      "created_at": "2026-01-11T00:00:30Z",
+      "updated_at": "2026-01-11T00:00:30Z",
+      "subtasks": [
+        {
+          "id": "b961213f-b052-41f1-aa5e-864517486f09",
+          "title": "输出相应的技术设计方案",
+          "description": "After the product design plan is completed, output the technical design plan to guide the development process",
+          "status": "pending",
+          "created_at": "2026-01-11T00:15:00Z",
+          "updated_at": "2026-01-11T00:15:00Z",
+          "subtasks": []
+        }
+      ]
     },
     {
-      "id": "1eb2ee11-5090-4311-b24d-0b5251b438b2",
-      "title": "查看当前所有任务",
-      "description": "Review and list all current tasks in the project",
+      "id": "a3c18559-3e41-4ac6-8f55-3939ca8f7583",
+      "title": "Start development of new project",
+      "description": "Project development to begin tomorrow",
       "status": "pending",
-      "created_at": "2025-12-27T10:00:03Z",
-      "updated_at": "2025-12-27T10:00:03Z",
-      "subtasks": []
-    },
-    {
-      "id": "9d86f520-eb41-4105-8af6-9f11aed4fffa",
-      "title": "查看当前所有任务",
-      "description": "Review and list all current tasks in the project",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:05Z",
-      "updated_at": "2025-12-27T10:00:05Z",
-      "subtasks": []
-    },
-    {
-      "id": "57dd0400-d845-4973-a06e-b7fb713da1a0",
-      "title": "分析当前进度",
-      "description": "Analyze the current progress of the project tasks",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:06Z",
-      "updated_at": "2025-12-27T10:00:06Z",
-      "subtasks": []
-    },
-    {
-      "id": "4d8a75d0-a280-4a3a-a980-1092dc2537bf",
-      "title": "测试树状图更新",
-      "description": "Test the update functionality of the task tree structure",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:07Z",
-      "updated_at": "2025-12-27T10:00:07Z",
-      "subtasks": []
-    },
-    {
-      "id": "9422cd46-69b6-44aa-974e-cbeb4019ef34",
-      "title": "English Tree Test",
-      "description": "Test the English language support in the task tree structure",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:08Z",
-      "updated_at": "2025-12-27T10:00:08Z",
-      "subtasks": []
-    },
-    {
-      "id": "faa25082-2ec8-4bbc-a974-6e7e0e016965",
-      "title": "solve the bug in the software",
-      "description": "Identify and resolve bugs in the software application",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:09Z",
-      "updated_at": "2025-12-27T10:00:09Z",
-      "subtasks": []
-    },
-    {
-      "id": "2ff9d692-8f5a-4c21-9de1-b0ff0edfede2",
-      "title": "CLI测试任务：验证路径问题",
-      "description": "Test the CLI functionality to verify path issues in the task tree structure",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:10Z",
-      "updated_at": "2025-12-27T10:00:10Z",
-      "subtasks": []
-    },
-    {
-      "id": "16365c3d-7f66-43f8-9d7e-a93b868e006f",
-      "title": "Web测试：重启后添加任务",
-      "description": "Test web functionality: adding tasks after system restart",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:11Z",
-      "updated_at": "2025-12-27T10:00:11Z",
-      "subtasks": []
-    },
-    {
-      "id": "795e5bd4-40b5-4799-81e9-eff1df25f2f2",
-      "title": "明天带小猫去做绝育",
-      "description": "明天带小猫去宠物医院做绝育手术",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:12Z",
-      "updated_at": "2025-12-27T10:00:12Z",
-      "subtasks": []
-    },
-    {
-      "id": "8f99062a-86e8-4a0b-a749-a7ed5df4d27e",
-      "title": "测试时间戳功能",
-      "description": "Test the timestamp functionality in the task tree structure to ensure correct creation and update times are recorded",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:13Z",
-      "updated_at": "2025-12-27T10:00:13Z",
-      "subtasks": []
-    },
-    {
-      "id": "b17b813a-1218-4986-ac3e-ee76325d07ee",
-      "title": "验证修复完成",
-      "description": "Verify that the fix for the identified issues is completed and all related tasks are done",
-      "status": "pending",
-      "created_at": "2025-12-27T10:00:14Z",
-      "updated_at": "2025-12-27T10:00:14Z",
+      "created_at": "2026-01-11T00:00:00Z",
+      "updated_at": "2026-01-11T00:00:00Z",
       "subtasks": []
     }
   ]
