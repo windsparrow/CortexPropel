@@ -25,8 +25,10 @@ app = FastAPI(title="Task Visualization Server", version="1.0.0")
 
 # Initialize database with correct paths
 # Use main data folder instead of visualization/data
-task_tree_file = Path(__file__).parent.parent / "data" / "task_tree.json"
-database = TaskDatabase(db_path=str(Path(__file__).parent.parent / "data" / "tasks.db"))
+data_dir = Path(__file__).parent.parent / "data"
+task_tree_file = data_dir / "task_tree.json"
+chat_history_file = data_dir / "chat_history.json"
+database = TaskDatabase(db_path=str(data_dir / "tasks.db"))
 task_manager = TaskManager()  # Initialize TaskManager for chat functionality
 
 def load_task_tree_local():
@@ -61,7 +63,7 @@ class ValidationResponse(BaseModel):
     issues: List[str]
 
 class ChatRequest(BaseModel):
-    """Request model for chat messages."""
+    """Request model for chat interactions."""
     message: str
 
 class ChatResponse(BaseModel):
@@ -71,6 +73,20 @@ class ChatResponse(BaseModel):
     tree: Dict[str, Any]
     tasks: List[Dict[str, Any]]
     error: Optional[str] = None
+
+class ChatMessage(BaseModel):
+    """Model for a single chat message."""
+    role: str
+    content: str
+    timestamp: str
+
+class ChatHistoryRequest(BaseModel):
+    """Request model for saving chat history."""
+    messages: List[ChatMessage]
+
+class ChatHistoryResponse(BaseModel):
+    """Response model for loading chat history."""
+    messages: List[Dict[str, str]]
 
 @app.get("/")
 async def read_index():
@@ -227,3 +243,32 @@ async def get_task_details(task_id: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+@app.get("/api/chat/history", response_model=ChatHistoryResponse)
+async def get_chat_history():
+    """Get chat history from file."""
+    try:
+        if chat_history_file.exists():
+            with open(chat_history_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return ChatHistoryResponse(messages=data.get("messages", []))
+        return ChatHistoryResponse(messages=[])
+    except Exception as e:
+        print(f"Error loading chat history: {e}")
+        return ChatHistoryResponse(messages=[])
+
+@app.post("/api/chat/history")
+async def save_chat_history(request: ChatHistoryRequest):
+    """Save chat history to file."""
+    try:
+        # Ensure data directory exists
+        chat_history_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save to file
+        with open(chat_history_file, "w", encoding="utf-8") as f:
+            json.dump({
+                "messages": [msg.dict() for msg in request.messages]
+            }, f, ensure_ascii=False, indent=2)
+        
+        return {"success": True, "message": "Chat history saved"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save chat history: {str(e)}")

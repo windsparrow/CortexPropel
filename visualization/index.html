@@ -121,19 +121,20 @@
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
         }
 
-        .chat-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background: white;
+        .message-time {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+            font-family: 'Monaco', monospace;
         }
 
-        .chat-header h2 {
-            margin: 0;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .message.user .message-time {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message.assistant .message-time {
+            text-align: left;
         }
 
         .chat-messages {
@@ -312,81 +313,116 @@
             padding: 1rem 1.5rem;
         }
 
-        /* Tasks List Styles */
-        .task-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        /* Task Table Styles */
+        .task-table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
-        .task-card {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .task-table thead {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .task-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .task-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .task-table tbody tr {
             transition: all 0.2s ease;
             cursor: pointer;
         }
 
-        .task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            border-color: var(--primary-color);
+        .task-table tbody tr:hover {
+            background: #f8fafc;
         }
 
-        .task-card.active {
-            border-color: var(--primary-color);
-            background-color: #f0f7ff;
+        .task-table tbody tr.active {
+            background: #f0f7ff;
+            border-left: 3px solid var(--primary-color);
         }
 
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-            gap: 1rem;
+        .task-title-cell {
+            font-weight: 500;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .task-title {
-            font-size: 1rem;
+        .task-desc-cell {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .task-status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: 600;
-            margin: 0;
-            line-height: 1.3;
-            color: var(--text-main);
-            flex: 1;
-        }
-
-        .task-status {
-            font-size: 0.65rem;
-            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            flex-shrink: 0;
         }
 
-        .task-desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
         }
 
-        .task-meta-footer {
-            display: flex;
-            justify-content: flex-end;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 0.5rem;
+        .status-in-progress,
+        .status-in_progress {
+            background: #dbeafe;
+            color: #1e40af;
         }
 
-        .task-id {
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .task-id-cell {
             font-family: 'Monaco', monospace;
             font-size: 0.7rem;
             color: #94a3b8;
+        }
+
+        .task-time-cell {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
         }
 
         /* SVG Styles */
@@ -541,19 +577,8 @@
         <div class="workspace">
             <!-- Chat Panel (Left) -->
             <div class="chat-panel">
-                <div class="chat-header">
-                    <h2>
-                        <span>💬</span>
-                        任务助手
-                    </h2>
-                </div>
                 <div class="chat-messages" id="chat-messages">
-                    <div class="message assistant">
-                        <div class="message-avatar">🤖</div>
-                        <div class="message-bubble">
-                            你好！我是你的任务管理助手。你可以通过对话来添加、修改或查询任务。例如："添加一个新任务：完成项目文档"
-                        </div>
-                    </div>
+                    <!-- Chat history will be loaded here -->
                 </div>
                 <div class="chat-input-area">
                     <div class="chat-input-container">
@@ -592,9 +617,9 @@
                         <h2>📋 任务列表</h2>
                     </div>
                     <div class="panel-content">
-                        <ul class="task-list" id="tasks-list">
-                            <!-- Tasks will be injected here -->
-                        </ul>
+                        <div id="tasks-list">
+                            <!-- Task table will be injected here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -636,8 +661,13 @@
         });
 
         // --- Chat Functions ---
+        let chatHistory = [];
+
         function initChat() {
             const chatInput = document.getElementById('chat-input');
+
+            // Load chat history
+            loadChatHistory();
 
             // Auto-resize textarea
             chatInput.addEventListener('input', function () {
@@ -654,6 +684,47 @@
             });
         }
 
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/chat/history');
+                if (response.ok) {
+                    const data = await response.json();
+                    chatHistory = data.messages || [];
+
+                    // Render existing messages
+                    chatHistory.forEach(msg => {
+                        addMessageToChat(msg.role, msg.content, msg.timestamp, false);
+                    });
+                }
+            } catch (error) {
+                console.log('No chat history found or error loading:', error);
+                // Add welcome message if no history
+                if (chatHistory.length === 0) {
+                    const welcomeMsg = {
+                        role: 'assistant',
+                        content: '你好！我是你的任务管理助手。你可以通过对话来添加、修改或查询任务。',
+                        timestamp: new Date().toISOString()
+                    };
+                    chatHistory.push(welcomeMsg);
+                    addMessageToChat(welcomeMsg.role, welcomeMsg.content, welcomeMsg.timestamp, false);
+                }
+            }
+        }
+
+        async function saveChatHistory() {
+            try {
+                await fetch('/api/chat/history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+            } catch (error) {
+                console.error('Failed to save chat history:', error);
+            }
+        }
+
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const sendBtn = document.getElementById('send-btn');
@@ -665,8 +736,11 @@
             input.disabled = true;
             sendBtn.disabled = true;
 
-            // Add user message to chat
-            addMessageToChat('user', message);
+            // Add user message to chat with timestamp
+            const userTimestamp = new Date().toISOString();
+            chatHistory.push({ role: 'user', content: message, timestamp: userTimestamp });
+            addMessageToChat('user', message, userTimestamp);
+            saveChatHistory();
 
             // Clear input
             input.value = '';
@@ -685,8 +759,11 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Add assistant response
-                    addMessageToChat('assistant', data.message);
+                    // Add assistant response with timestamp
+                    const assistantTimestamp = new Date().toISOString();
+                    chatHistory.push({ role: 'assistant', content: data.message, timestamp: assistantTimestamp });
+                    addMessageToChat('assistant', data.message, assistantTimestamp);
+                    saveChatHistory();
 
                     // Update tree and task list
                     state.treeData = data.tree;
@@ -696,11 +773,19 @@
                     // Update stats
                     document.getElementById('total-tasks').textContent = data.tasks.length;
                 } else {
-                    addMessageToChat('assistant', `错误: ${data.error || '处理失败'}`);
+                    const errorTimestamp = new Date().toISOString();
+                    const errorMsg = `错误: ${data.error || '处理失败'}`;
+                    chatHistory.push({ role: 'assistant', content: errorMsg, timestamp: errorTimestamp });
+                    addMessageToChat('assistant', errorMsg, errorTimestamp);
+                    saveChatHistory();
                 }
             } catch (error) {
                 console.error('Chat error:', error);
-                addMessageToChat('assistant', '抱歉，发生了错误。请稍后重试。');
+                const errorTimestamp = new Date().toISOString();
+                const errorMsg = '抱歉，发生了错误。请稍后重试。';
+                chatHistory.push({ role: 'assistant', content: errorMsg, timestamp: errorTimestamp });
+                addMessageToChat('assistant', errorMsg, errorTimestamp);
+                saveChatHistory();
             } finally {
                 // Re-enable input
                 input.disabled = false;
@@ -709,7 +794,7 @@
             }
         }
 
-        function addMessageToChat(role, content) {
+        function addMessageToChat(role, content, timestamp = null, shouldSave = true) {
             const messagesContainer = document.getElementById('chat-messages');
 
             const messageDiv = document.createElement('div');
@@ -719,16 +804,47 @@
             avatar.className = 'message-avatar';
             avatar.textContent = role === 'user' ? '👤' : '🤖';
 
+            const contentWrapper = document.createElement('div');
+
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
             bubble.textContent = content;
 
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            const time = timestamp ? new Date(timestamp) : new Date();
+            timeDiv.textContent = formatMessageTime(time);
+
+            contentWrapper.appendChild(bubble);
+            contentWrapper.appendChild(timeDiv);
+
             messageDiv.appendChild(avatar);
-            messageDiv.appendChild(bubble);
+            messageDiv.appendChild(contentWrapper);
             messagesContainer.appendChild(messageDiv);
 
             // Scroll to bottom
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function formatMessageTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (seconds < 60) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 7) return `${days}天前`;
+
+            return date.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         function initSVG() {
@@ -935,24 +1051,96 @@
 
         // --- List Rendering ---
         function renderTaskList(tasks) {
-            const list = document.getElementById('tasks-list');
-            list.innerHTML = tasks.map(t => {
-                const status = t.status || 'unknown';
+            // Sort tasks by updated_at in descending order (newest first)
+            const sortedTasks = [...tasks].sort((a, b) => {
+                const timeA = new Date(a.updated_at || a.created_at || 0);
+                const timeB = new Date(b.updated_at || b.created_at || 0);
+                return timeB - timeA;
+            });
+
+            const container = document.getElementById('tasks-list');
+
+            // Create table HTML
+            const tableHTML = `
+                <div class="task-table-container">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>描述</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>更新时间</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sortedTasks.map(t => {
+                const status = (t.status || 'pending').replace(/-/g, '_');
+                const createdTime = formatTime(t.created_at);
+                const updatedTime = formatTime(t.updated_at);
+
                 return `
-                    <li class="task-card" id="card-${t.id}" onclick="focusNode('${t.id}')">
-                        <div class="task-header">
-                            <h3 class="task-title">${t.title || 'Untitled Task'}</h3>
-                            <span class="task-status text-${status}">${status}</span>
-                        </div>
-                        <div class="task-desc">
-                            ${truncate(t.description || '', 80)}
-                        </div>
-                        <div class="task-meta-footer">
-                            <span class="task-id">ID: ${t.id}</span>
-                        </div>
-                    </li>
-                `;
-            }).join('');
+                                    <tr id="row-${t.id}" onclick="focusNode('${t.id}')">
+                                        <td class="task-title-cell" title="${escapeHtml(t.title || 'Untitled')}">
+                                            ${escapeHtml(t.title || 'Untitled')}
+                                        </td>
+                                        <td class="task-desc-cell" title="${escapeHtml(t.description || '')}">
+                                            ${escapeHtml(t.description || '-')}
+                                        </td>
+                                        <td>
+                                            <span class="task-status-badge status-${status}">
+                                                ${status.replace(/_/g, '-')}
+                                            </span>
+                                        </td>
+                                        <td class="task-time-cell">${createdTime}</td>
+                                        <td class="task-time-cell">${updatedTime}</td>
+                                        <td class="task-id-cell" title="${t.id}">
+                                            ${t.id.substring(0, 8)}...
+                                        </td>
+                                    </tr>
+                                `;
+            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '-';
+            try {
+                const date = new Date(timeStr);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return '刚刚';
+                if (diffMins < 60) return `${diffMins}分钟前`;
+                if (diffHours < 24) return `${diffHours}小时前`;
+                if (diffDays < 7) return `${diffDays}天前`;
+
+                // Format as YYYY-MM-DD HH:mm
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return timeStr;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // --- Interactions ---
