@@ -132,6 +132,7 @@ class TaskManager:
             op_type = op.get("operation", "").lower()
             task_data = op.get("task", {})
             parent_id = op.get("parent_id", "root")
+            query_data = op.get("query", {})
             
             try:
                 if op_type == "add":
@@ -140,6 +141,8 @@ class TaskManager:
                     result = self._update_task(task_tree, task_data)
                 elif op_type == "delete":
                     result = self._delete_task(task_tree, task_data.get("id"))
+                elif op_type == "query":
+                    result = self._query_task(task_tree, query_data)
                 else:
                     result = {"success": False, "error": f"Unknown operation: {op_type}"}
                 
@@ -269,6 +272,78 @@ class TaskManager:
         
         print(f"✓ 删除任务: {task_to_delete.get('title', task_id)} (包含 {len(ids_to_delete)} 个任务)")
         return {"success": True, "task_id": task_id, "deleted_count": len(ids_to_delete)}
+    
+    def _query_task(self, task_tree: dict, query_data: dict) -> dict:
+        """
+        Query and analyze tasks.
+        
+        Args:
+            task_tree: The task tree to query from
+            query_data: Query parameters (type, target_id, request)
+            
+        Returns:
+            Result dictionary with analysis report
+        """
+        query_type = query_data.get("type", "list")
+        target_id = query_data.get("target_id", "root")
+        request = query_data.get("request", "")
+        
+        # Find target task
+        target = self._find_task_by_id(task_tree, target_id)
+        if target is None:
+            return {"success": False, "error": f"Task not found: {target_id}"}
+        
+        # Extract all subtasks data
+        tasks_data = self._extract_subtasks_data(target)
+        
+        if not tasks_data:
+            return {
+                "success": True, 
+                "report": f"## 查询结果\n\n在 **{target.get('title', target_id)}** 下没有找到子任务记录。",
+                "task_count": 0
+            }
+        
+        # Generate analysis report using LLM
+        report = self.llm_client.generate_analysis(tasks_data, request, query_type)
+        
+        print(f"✓ 查询完成: {target.get('title', target_id)} (共 {len(tasks_data)} 条记录)")
+        return {
+            "success": True,
+            "report": report,
+            "task_count": len(tasks_data),
+            "target_title": target.get("title", target_id)
+        }
+    
+    def _extract_subtasks_data(self, node: dict, depth: int = 0) -> list:
+        """
+        Recursively extract all subtasks data from a node.
+        
+        Args:
+            node: The node to extract from
+            depth: Current depth level
+            
+        Returns:
+            List of task data dictionaries
+        """
+        tasks = []
+        
+        for subtask in node.get("subtasks", []):
+            task_data = {
+                "id": subtask.get("id"),
+                "title": subtask.get("title"),
+                "description": subtask.get("description", ""),
+                "status": subtask.get("status", "pending"),
+                "created_at": subtask.get("created_at"),
+                "updated_at": subtask.get("updated_at"),
+                "depth": depth
+            }
+            tasks.append(task_data)
+            
+            # Recursively extract nested subtasks
+            nested = self._extract_subtasks_data(subtask, depth + 1)
+            tasks.extend(nested)
+        
+        return tasks
     
     def _find_task_by_id(self, node: dict, task_id: str) -> Optional[dict]:
         """

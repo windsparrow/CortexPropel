@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CortexPropel - 任务全景视图</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -261,6 +262,148 @@
             background: #f1f5f9;
             color: var(--text-main);
             border-bottom-left-radius: 4px;
+        }
+
+        /* Report bubble styles */
+        .report-bubble {
+            max-width: 100%;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Markdown content styles */
+        .markdown-content {
+            line-height: 1.6;
+        }
+
+        .markdown-content h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0.8em 0 0.4em;
+            padding-bottom: 0.3em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #334155;
+            margin: 0.7em 0 0.3em;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #475569;
+            margin: 0.6em 0 0.3em;
+        }
+
+        .markdown-content h4,
+        .markdown-content h5,
+        .markdown-content h6 {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #64748b;
+            margin: 0.5em 0 0.2em;
+        }
+
+        .markdown-content p {
+            margin: 0.5em 0;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
+
+        .markdown-content li {
+            margin: 0.3em 0;
+        }
+
+        .markdown-content li::marker {
+            color: var(--primary-color);
+        }
+
+        .markdown-content code {
+            background: #e2e8f0;
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .markdown-content pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.8em 1em;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 0.6em 0;
+        }
+
+        .markdown-content pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            background: rgba(99, 102, 241, 0.08);
+            margin: 0.6em 0;
+            padding: 0.5em 1em;
+            border-radius: 0 8px 8px 0;
+            color: #475569;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.6em 0;
+            font-size: 0.9em;
+        }
+
+        .markdown-content th,
+        .markdown-content td {
+            border: 1px solid #e2e8f0;
+            padding: 0.5em 0.8em;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .markdown-content tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .markdown-content strong {
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .markdown-content em {
+            color: #7c3aed;
+        }
+
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 1em 0;
+        }
+
+        .markdown-content a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .markdown-content a:hover {
+            text-decoration: underline;
         }
 
         .chat-input-area {
@@ -876,6 +1019,14 @@
                     const assistantTimestamp = new Date().toISOString();
                     chatHistory.push({ role: 'assistant', content: data.message, timestamp: assistantTimestamp });
                     addMessageToChat('assistant', data.message, assistantTimestamp);
+
+                    // If there's a report, add it as a separate message
+                    if (data.report) {
+                        const reportTimestamp = new Date().toISOString();
+                        chatHistory.push({ role: 'assistant', content: data.report, timestamp: reportTimestamp });
+                        addMessageToChat('assistant', data.report, reportTimestamp, false, true);
+                    }
+
                     saveChatHistory();
 
                     // Update tree and task list
@@ -905,7 +1056,7 @@
             }
         }
 
-        function addMessageToChat(role, content, timestamp = null, shouldSave = true) {
+        function addMessageToChat(role, content, timestamp = null, shouldSave = true, isReport = false) {
             const messagesContainer = document.getElementById('chat-messages');
 
             const messageDiv = document.createElement('div');
@@ -919,7 +1070,14 @@
 
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
-            bubble.textContent = content;
+
+            // Render Markdown for reports
+            if (isReport) {
+                bubble.innerHTML = renderMarkdown(content);
+                bubble.classList.add('report-bubble', 'markdown-content');
+            } else {
+                bubble.textContent = content;
+            }
 
             const timeDiv = document.createElement('div');
             timeDiv.className = 'message-time';
@@ -935,6 +1093,24 @@
 
             // Scroll to bottom
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Render Markdown using marked.js library
+        function renderMarkdown(text) {
+            // Configure marked options
+            marked.setOptions({
+                breaks: true,      // Convert \n to <br>
+                gfm: true,         // GitHub Flavored Markdown
+                headerIds: false,  // Don't add IDs to headers
+                mangle: false      // Don't mangle email addresses
+            });
+
+            try {
+                return marked.parse(text);
+            } catch (e) {
+                console.error('Markdown parsing error:', e);
+                return text.replace(/\n/g, '<br>');
+            }
         }
 
         function formatMessageTime(date) {

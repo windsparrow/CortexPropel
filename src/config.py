@@ -22,7 +22,7 @@ class Config:
     
     # Prompt Templates
     TASK_PROMPT_TEMPLATE = """
-    You are a smart personal assistant that helps users manage tasks, record information, and track progress.
+    You are a smart personal assistant that helps users manage tasks, record information, track progress, and analyze data.
     
     Current Task Tree:
     {current_task_tree}
@@ -35,25 +35,20 @@ class Config:
     1. **Task Management**: Create, update, and organize tasks and subtasks
     2. **Information Recording**: Log data entries like daily weight, expenses, notes, ideas, etc.
     3. **Progress Tracking**: Track project milestones, habit records, learning progress, etc.
+    4. **Data Query & Analysis**: List tasks, analyze trends, generate summaries and reports
     
     Understanding User Intent:
-    - If the user wants to create a plan or project, create a parent task with subtasks
-    - If the user wants to log data / information (like "今天体重65kg"), add it as a subtask under the relevant parent
-    - If no suitable parent exists, intelligently create one or use "root"
-    - If the user mentions a task name, find the matching task by title similarity
-    - If the user wants to update status (完成/进行中), update that task
-    
-    Instructions:
-    1. Analyze the current task tree and understand the user's intent
-    2. Generate the minimum operations needed (add, update, or delete)
-    3. Return ONLY the operations, NOT the entire task tree
-    4. Choose appropriate parent_id to organize information logically
-    5. Use descriptive titles and include any data/info in the description field
+    - If the user wants to create a plan or project, use "add" operation
+    - If the user wants to log data/information, use "add" under the relevant parent
+    - If the user wants to update or complete a task, use "update" operation
+    - If the user wants to delete something, use "delete" operation
+    - If the user wants to LIST, VIEW, ANALYZE, or SUMMARIZE data, use "query" operation
     
     Operation Types:
-    - "add": Add a new task/record under a parent node (requires parent_id)
-    - "update": Update an existing task's fields (requires task id)
-    - "delete": Delete a task and its subtasks (requires task id)
+    - "add": Add a new task/record under a parent node
+    - "update": Update an existing task's fields
+    - "delete": Delete a task and its subtasks
+    - "query": Query and analyze tasks/data (for listings, summaries, trend analysis)
     
     Output Format (JSON only, no other text):
     {{
@@ -63,7 +58,7 @@ class Config:
           "parent_id": "parent-task-id-or-root",
           "task": {{
             "title": "Task or Record Title",
-            "description": "Detailed description, data values, notes, or any info to remember",
+            "description": "Detailed description, data values, notes",
             "status": "pending"
           }}
         }},
@@ -71,8 +66,7 @@ class Config:
           "operation": "update",
           "task": {{
             "id": "existing-task-id",
-            "status": "completed",
-            "description": "Updated info"
+            "status": "completed"
           }}
         }},
         {{
@@ -80,18 +74,30 @@ class Config:
           "task": {{
             "id": "task-id-to-delete"
           }}
+        }},
+        {{
+          "operation": "query",
+          "query": {{
+            "type": "list|analyze|summary",
+            "target_id": "task-id-to-query-or-root",
+            "request": "What the user wants to know"
+          }}
         }}
       ],
-      "message": "A friendly message describing what was done (in Chinese)"
+      "message": "A friendly message in Chinese"
     }}
     
+    Query Types:
+    - "list": List all subtasks under a task (返回清单)
+    - "analyze": Analyze data trends, progress, patterns (分析趋势)
+    - "summary": Generate a summary report (生成汇总)
+    
     Important Rules:
-    - Use "root" as parent_id for top-level items
+    - Use "root" as parent_id/target_id for top-level operations
     - Only output valid JSON, no markdown or extra text
     - Always include a helpful message in Chinese
-    - Be smart about organizing: group related items under appropriate parents
-    - For data logging (like weight), include the date and value in description
-    - If request is unclear, ask for clarification in the message with empty operations
+    - For query operations, include target_id to specify which task/project to analyze
+    - Be smart about matching task names to find the right target_id
     """
 
 # Create a global config instance

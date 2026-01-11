@@ -83,6 +83,7 @@ class ChatResponse(BaseModel):
     tree: Dict[str, Any]
     tasks: List[Dict[str, Any]]
     error: Optional[str] = None
+    report: Optional[str] = None  # Analysis report for query operations
 
 class ChatMessage(BaseModel):
     """Model for a single chat message."""
@@ -217,12 +218,20 @@ async def chat_with_llm(request: ChatRequest):
         # Get updated task list from database
         tasks = database.get_all_tasks()
         
-        # Log operation results
+        # Log operation results and collect reports
         ops = result.get("operations_applied", [])
         logger.info(f"[操作结果] 执行了 {len(ops)} 个操作")
+        
+        report = None
         for op in ops:
             status = "✓" if op.get("success") else "✗"
-            logger.info(f"  {status} {op.get('operation')}: {op.get('title') or op.get('task_id', '')[:8]}")
+            op_type = op.get('operation', '')
+            logger.info(f"  {status} {op_type}: {op.get('title') or op.get('target_title') or op.get('task_id', '')[:8]}")
+            
+            # Extract report from query operations
+            if op_type == "query" and op.get("report"):
+                report = op.get("report")
+                logger.info(f"  [分析报告] 生成报告，{op.get('task_count', 0)} 条记录")
         
         # Use message from LLM or default
         response_message = result.get("message", "任务已更新")
@@ -231,7 +240,8 @@ async def chat_with_llm(request: ChatRequest):
             success=True,
             message=response_message,
             tree=result.get("tree", load_task_tree_local()),
-            tasks=tasks
+            tasks=tasks,
+            report=report
         )
     except Exception as e:
         # Log error
