@@ -13,3 +13,5 @@ visualization/venv
 visualization/__pycache__
 
 data/
+
+.trae/

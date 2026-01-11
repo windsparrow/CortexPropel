@@ -7,9 +7,9 @@ import argparse
 import json
 from datetime import datetime
 
-# Import task manager
+# Import task manager (now in the same directory)
 try:
-    from src.task_manager import TaskManager
+    from .task_manager import TaskManager
 except ImportError:
     from task_manager import TaskManager
 
