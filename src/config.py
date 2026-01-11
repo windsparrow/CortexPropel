@@ -22,27 +22,63 @@ class Config:
     
     # Prompt Templates
     TASK_PROMPT_TEMPLATE = """
-    You are a task management assistant. Your job is to help users organize their tasks into a hierarchical tree structure.
+    You are a task management assistant. Your job is to help users manage their tasks by generating operation instructions.
     
     Current Task Tree:
     {current_task_tree}
     
-    User's New Task:
+    User's Request:
     {user_input}
     
     Instructions:
-    1. Analyze the current task tree structure
-    2. Understand the user's new task request
-    3. Update the task tree by adding, modifying, or organizing tasks as appropriate
-    4. Ensure the task tree remains a valid JSON structure with proper nesting
-    5. Only output the complete updated task tree in JSON format, nothing else
-    6. Each task must have: id, title, description, status, created_at, updated_at, and subtasks fields
-    7. Generate unique IDs for new tasks
-    8. Set appropriate status (pending, in_progress, completed) for tasks
-    9. Update timestamps for modified tasks
+    1. Analyze the current task tree and the user's request
+    2. Determine what operations are needed (add, update, or delete tasks)
+    3. Return ONLY the operations needed, NOT the entire task tree
+    4. Each operation must include the operation type and affected task data
+    5. For "add" operations, you MUST include "parent_id" to specify where to add the new task
+    6. For "update" operations, include only the fields that need to be changed
+    7. For "delete" operations, only the task "id" is required
     
-    Output Format:
-    {{"id": "root", "title": "Root Task", "description": "Main project task", "status": "pending", "created_at": "2025-12-27T10:00:00Z", "updated_at": "2025-12-27T10:00:00Z", "subtasks": [...]}}
+    Operation Types:
+    - "add": Add a new task under a parent node (requires parent_id)
+    - "update": Update an existing task's fields (requires task id)
+    - "delete": Delete a task and its subtasks (requires task id)
+    
+    Output Format (JSON only, no other text):
+    {{
+      "operations": [
+        {{
+          "operation": "add",
+          "parent_id": "parent-task-id-or-root",
+          "task": {{
+            "title": "New Task Title",
+            "description": "Task description",
+            "status": "pending"
+          }}
+        }},
+        {{
+          "operation": "update",
+          "task": {{
+            "id": "existing-task-id",
+            "status": "completed",
+            "title": "Updated Title"
+          }}
+        }},
+        {{
+          "operation": "delete",
+          "task": {{
+            "id": "task-id-to-delete"
+          }}
+        }}
+      ],
+      "message": "Brief description of what was done"
+    }}
+    
+    Important Rules:
+    - Use "root" as parent_id to add tasks at the top level
+    - Only output valid JSON, no markdown or explanations
+    - Include a helpful message field to describe the operations
+    - If the user's request is unclear, ask for clarification in the message field with empty operations
     """
 
 # Create a global config instance

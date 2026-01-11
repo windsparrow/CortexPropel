@@ -211,24 +211,26 @@ async def chat_with_llm(request: ChatRequest):
         logger.info(f"[用户输入] {request.message}")
         
         # Process user input through TaskManager
-        # This updates the task_tree.json file
-        task_manager.process_user_input(request.message)
-        
-        # Reload the complete tree from file to ensure consistency
-        # This is important because LLM might return incomplete tree
-        complete_tree = load_task_tree_local()
+        # Now returns dict with tree, operations_applied, message
+        result = task_manager.process_user_input(request.message)
         
         # Get updated task list from database
         tasks = database.get_all_tasks()
         
-        # Log LLM result summary
-        task_count = len(tasks)
-        logger.info(f"[LLM处理完成] 当前任务数: {task_count}")
+        # Log operation results
+        ops = result.get("operations_applied", [])
+        logger.info(f"[操作结果] 执行了 {len(ops)} 个操作")
+        for op in ops:
+            status = "✓" if op.get("success") else "✗"
+            logger.info(f"  {status} {op.get('operation')}: {op.get('title') or op.get('task_id', '')[:8]}")
+        
+        # Use message from LLM or default
+        response_message = result.get("message", "任务已更新")
         
         return ChatResponse(
             success=True,
-            message="任务已更新",
-            tree=complete_tree,
+            message=response_message,
+            tree=result.get("tree", load_task_tree_local()),
             tasks=tasks
         )
     except Exception as e:

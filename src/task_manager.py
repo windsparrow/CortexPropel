@@ -86,27 +86,247 @@ class TaskManager:
     
     def process_user_input(self, user_input: str) -> dict:
         """
-        Process user input and update the task tree.
+        Process user input and apply operations to the task tree.
         
         Args:
-            user_input: The user's new task request
+            user_input: The user's task request
             
         Returns:
-            The updated task tree as a dictionary
+            Dictionary with updated tree and operation results
         """
         # Load current task tree
         current_tree = self.load_task_tree()
         
-        # Process input using LLM
-        updated_tree = self.llm_client.process_task_input(current_tree, user_input)
+        # Get operation instructions from LLM
+        llm_result = self.llm_client.process_task_input(current_tree, user_input)
         
-        # Assign UUIDs to new tasks by comparing with existing tasks in database
-        updated_tree = self._assign_uuids_to_new_tasks(updated_tree)
+        operations = llm_result.get("operations", [])
+        message = llm_result.get("message", "")
         
-        # Save updated task tree (this will also sync to database)
-        self.save_task_tree(updated_tree)
+        # Apply each operation to the task tree
+        results = self.apply_operations(current_tree, operations)
         
-        return updated_tree
+        # Save the updated task tree
+        self.save_task_tree(current_tree)
+        
+        return {
+            "tree": current_tree,
+            "operations_applied": results,
+            "message": message
+        }
+    
+    def apply_operations(self, task_tree: dict, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Apply a list of operations to the task tree.
+        
+        Args:
+            task_tree: The task tree to modify (modified in place)
+            operations: List of operation dictionaries
+            
+        Returns:
+            List of results for each operation
+        """
+        results = []
+        
+        for op in operations:
+            op_type = op.get("operation", "").lower()
+            task_data = op.get("task", {})
+            parent_id = op.get("parent_id", "root")
+            
+            try:
+                if op_type == "add":
+                    result = self._add_task(task_tree, parent_id, task_data)
+                elif op_type == "update":
+                    result = self._update_task(task_tree, task_data)
+                elif op_type == "delete":
+                    result = self._delete_task(task_tree, task_data.get("id"))
+                else:
+                    result = {"success": False, "error": f"Unknown operation: {op_type}"}
+                
+                results.append({"operation": op_type, **result})
+                
+            except Exception as e:
+                results.append({"operation": op_type, "success": False, "error": str(e)})
+        
+        return results
+    
+    def _add_task(self, task_tree: dict, parent_id: str, task_data: dict) -> dict:
+        """
+        Add a new task under the specified parent.
+        
+        Args:
+            task_tree: The task tree to modify
+            parent_id: ID of the parent task
+            task_data: Data for the new task
+            
+        Returns:
+            Result dictionary with success status and new task ID
+        """
+        from datetime import datetime
+        
+        # Generate UUID for new task
+        new_id = str(uuid.uuid4())
+        now = datetime.now().isoformat()
+        
+        # Create complete task structure
+        new_task = {
+            "id": new_id,
+            "title": task_data.get("title", "Untitled"),
+            "description": task_data.get("description", ""),
+            "status": task_data.get("status", "pending"),
+            "created_at": now,
+            "updated_at": now,
+            "subtasks": []
+        }
+        
+        # Find parent and add task
+        parent = self._find_task_by_id(task_tree, parent_id)
+        if parent is None:
+            return {"success": False, "error": f"Parent task not found: {parent_id}"}
+        
+        if "subtasks" not in parent:
+            parent["subtasks"] = []
+        
+        parent["subtasks"].append(new_task)
+        
+        # Sync to database
+        self.db.create_or_update_task(new_task, new_task)
+        
+        print(f"✓ 添加任务: {new_task['title']} (ID: {new_id[:8]}...)")
+        return {"success": True, "task_id": new_id, "title": new_task["title"]}
+    
+    def _update_task(self, task_tree: dict, task_data: dict) -> dict:
+        """
+        Update an existing task.
+        
+        Args:
+            task_tree: The task tree to modify
+            task_data: Data with task ID and fields to update
+            
+        Returns:
+            Result dictionary with success status
+        """
+        from datetime import datetime
+        
+        task_id = task_data.get("id")
+        if not task_id:
+            return {"success": False, "error": "Task ID is required for update"}
+        
+        task = self._find_task_by_id(task_tree, task_id)
+        if task is None:
+            return {"success": False, "error": f"Task not found: {task_id}"}
+        
+        # Update allowed fields
+        updated_fields = []
+        for field in ["title", "description", "status"]:
+            if field in task_data:
+                task[field] = task_data[field]
+                updated_fields.append(field)
+        
+        if updated_fields:
+            task["updated_at"] = datetime.now().isoformat()
+            
+            # Sync to database
+            self.db.create_or_update_task(task_data, task)
+            
+            print(f"✓ 更新任务: {task['title']} (字段: {', '.join(updated_fields)})")
+            return {"success": True, "task_id": task_id, "updated_fields": updated_fields}
+        
+        return {"success": True, "task_id": task_id, "updated_fields": []}
+    
+    def _delete_task(self, task_tree: dict, task_id: str) -> dict:
+        """
+        Delete a task and its subtasks.
+        
+        Args:
+            task_tree: The task tree to modify
+            task_id: ID of the task to delete
+            
+        Returns:
+            Result dictionary with success status
+        """
+        if not task_id:
+            return {"success": False, "error": "Task ID is required for delete"}
+        
+        if task_id == "root":
+            return {"success": False, "error": "Cannot delete root task"}
+        
+        # Find and remove the task
+        parent = self._find_parent_of_task(task_tree, task_id)
+        if parent is None:
+            return {"success": False, "error": f"Task not found: {task_id}"}
+        
+        # Collect all task IDs to delete (including subtasks)
+        task_to_delete = self._find_task_by_id(task_tree, task_id)
+        ids_to_delete = self._collect_all_task_ids(task_to_delete)
+        
+        # Remove from parent's subtasks
+        parent["subtasks"] = [t for t in parent.get("subtasks", []) if t.get("id") != task_id]
+        
+        # Delete from database
+        for tid in ids_to_delete:
+            self.db.delete_task(tid)
+        
+        print(f"✓ 删除任务: {task_to_delete.get('title', task_id)} (包含 {len(ids_to_delete)} 个任务)")
+        return {"success": True, "task_id": task_id, "deleted_count": len(ids_to_delete)}
+    
+    def _find_task_by_id(self, node: dict, task_id: str) -> Optional[dict]:
+        """
+        Find a task by ID in the task tree.
+        
+        Args:
+            node: Current node to search from
+            task_id: ID to find
+            
+        Returns:
+            The task node or None if not found
+        """
+        if node.get("id") == task_id:
+            return node
+        
+        for subtask in node.get("subtasks", []):
+            result = self._find_task_by_id(subtask, task_id)
+            if result:
+                return result
+        
+        return None
+    
+    def _find_parent_of_task(self, node: dict, task_id: str, parent: dict = None) -> Optional[dict]:
+        """
+        Find the parent of a task by ID.
+        
+        Args:
+            node: Current node to search from
+            task_id: ID of the task whose parent we want
+            parent: Parent of current node
+            
+        Returns:
+            The parent node or None if not found
+        """
+        if node.get("id") == task_id:
+            return parent
+        
+        for subtask in node.get("subtasks", []):
+            result = self._find_parent_of_task(subtask, task_id, node)
+            if result:
+                return result
+        
+        return None
+    
+    def _collect_all_task_ids(self, node: dict) -> List[str]:
+        """
+        Collect all task IDs from a node and its subtasks.
+        
+        Args:
+            node: The node to collect IDs from
+            
+        Returns:
+            List of all task IDs
+        """
+        ids = [node.get("id")]
+        for subtask in node.get("subtasks", []):
+            ids.extend(self._collect_all_task_ids(subtask))
+        return [id for id in ids if id]
     
     def get_task_tree(self) -> dict:
         """

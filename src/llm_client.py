@@ -37,14 +37,16 @@ class LLMClient:
     
     def process_task_input(self, current_task_tree: Dict[str, Any], user_input: str) -> Dict[str, Any]:
         """
-        Process user input and update the task tree using the LLM.
+        Process user input and return operation instructions from LLM.
         
         Args:
             current_task_tree: The current task tree as a dictionary
-            user_input: The user's new task request
+            user_input: The user's task request
             
         Returns:
-            The updated task tree as a dictionary
+            Dictionary containing:
+            - operations: List of operations (add/update/delete)
+            - message: Description of what was done
         """
         task_tree_json = json.dumps(current_task_tree, ensure_ascii=False, indent=2)
         
@@ -59,8 +61,23 @@ class LLMClient:
         content = response.content
         logger.info(f"[LLM响应] {content}")
         
-        json_start = content.index("{")
-        json_end = content.rindex("}") + 1
-        response_json = content[json_start:json_end]
-        
-        return json.loads(response_json)
+        try:
+            json_start = content.index("{")
+            json_end = content.rindex("}") + 1
+            response_json = content[json_start:json_end]
+            result = json.loads(response_json)
+            
+            # Validate response format
+            if "operations" not in result:
+                logger.warning("LLM response missing 'operations' field, wrapping as empty operations")
+                result = {"operations": [], "message": result.get("message", "无法解析操作")}
+            
+            # Log operations summary
+            ops = result.get("operations", [])
+            logger.info(f"[操作摘要] 共 {len(ops)} 个操作: {[op.get('operation') for op in ops]}")
+            
+            return result
+            
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.error(f"[解析失败] {e}")
+            return {"operations": [], "message": f"解析LLM响应失败: {str(e)}"}
