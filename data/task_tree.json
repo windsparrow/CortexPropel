@@ -4,16 +4,25 @@
   "description": "Main project task",
   "status": "pending",
   "created_at": "2026-01-10T23:59:51.198818",
-  "updated_at": "2026-01-11T00:15:30Z",
+  "updated_at": "2026-01-11T16:00:00Z",
   "subtasks": [
     {
       "id": "0b6d384a-9dbd-433a-9779-bec6d6cac36e",
       "title": "新项目需要首先把思路理清楚，输出一个产品设计的方案",
       "description": "理清楚项目思路，完成产品设计方案的输出，为项目开发做前期准备",
       "status": "pending",
-      "created_at": "2026-01-11T00:00:30Z",
-      "updated_at": "2026-01-11T00:00:30Z",
+      "created_at": "2026-01-11T15:30:00Z",
+      "updated_at": "2026-01-11T15:30:00Z",
       "subtasks": [
+        {
+          "id": "46a4d529-abcd-459d-92e7-5fdf77c90bd6",
+          "title": "形成一个全新的产品方案计划",
+          "description": "Form a comprehensive and detailed product plan including requirements, features, and timeline for the new project",
+          "status": "pending",
+          "created_at": "2026-01-11T15:30:00Z",
+          "updated_at": "2026-01-11T15:30:00Z",
+          "subtasks": []
+        },
         {
           "id": "b961213f-b052-41f1-aa5e-864517486f09",
           "title": "输出相应的技术设计方案",
@@ -21,6 +30,15 @@
           "status": "pending",
           "created_at": "2026-01-11T00:15:00Z",
           "updated_at": "2026-01-11T00:15:00Z",
+          "subtasks": []
+        },
+        {
+          "id": "78e82745-b26a-4bb8-ad7c-3735c9d0407c",
+          "title": "今天下午新算命小程序的思路梳理清楚，并搭建起来第1个版本",
+          "description": "This afternoon, clarify the ideas for the new fortune-telling applet and build the first version",
+          "status": "pending",
+          "created_at": "2026-01-11T14:30:00Z",
+          "updated_at": "2026-01-11T14:30:00Z",
           "subtasks": []
         }
       ]
@@ -32,6 +50,24 @@
       "status": "pending",
       "created_at": "2026-01-11T00:00:00Z",
       "updated_at": "2026-01-11T00:00:00Z",
+      "subtasks": []
+    },
+    {
+      "id": "3b37315d-6b97-4d5d-b7d4-337c3c13a014",
+      "title": "今天中午买一条鱼，做成烤鱼吃。",
+      "description": "Buy a fish at noon today and make roasted fish to eat",
+      "status": "pending",
+      "created_at": "2026-01-11T12:00:00Z",
+      "updated_at": "2026-01-11T12:00:00Z",
+      "subtasks": []
+    },
+    {
+      "id": "85c4a58d-f508-4d0a-9842-46d45ab2fe4e",
+      "title": "下午带小猫去医院检查身体，检查一下他伤口恢复的情况。",
+      "description": "下午带小猫去医院检查身体，检查一下他伤口恢复的情况。",
+      "status": "pending",
+      "created_at": "2026-01-11T16:00:00Z",
+      "updated_at": "2026-01-11T16:00:00Z",
       "subtasks": []
     }
   ]

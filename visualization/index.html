@@ -1009,11 +1009,15 @@
 
         // --- Tree Rendering ---
         function renderTree(data) {
+            // Clear previous tree elements to prevent stacking
+            state.g.selectAll(".node").remove();
+            state.g.selectAll(".link").remove();
+
             const root = d3.hierarchy(data, d => d.subtasks);
 
             // Calculate layout dimensions
             // Horizontal layout: height depends on number of leaves, width on depth
-            const dx = 50; // vertical spacing between nodes (was config.nodeHeight + 30)
+            const dx = 80; // vertical spacing between nodes (increased for better visibility)
             const dy = 300; // horizontal spacing between levels (widened for adaptive widths)
 
             // Use d3.tree
@@ -1040,7 +1044,7 @@
 
             // 3. Adjust horizontal spacing (y) based on max width per level to prevent overlap
             const levelWidths = {};
-            const levelGap = 80; // Gap between levels
+            const levelGap = 120; // Gap between levels (increased for better spacing)
 
             // Find max width for each depth
             root.descendants().forEach(d => {

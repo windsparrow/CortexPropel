@@ -207,6 +207,9 @@ async def validate_data_consistency():
 async def chat_with_llm(request: ChatRequest):
     """Process chat message and update task tree."""
     try:
+        # Log user input
+        logger.info(f"[用户输入] {request.message}")
+        
         # Process user input through TaskManager
         # This updates the task_tree.json file
         task_manager.process_user_input(request.message)
@@ -218,6 +221,10 @@ async def chat_with_llm(request: ChatRequest):
         # Get updated task list from database
         tasks = database.get_all_tasks()
         
+        # Log LLM result summary
+        task_count = len(tasks)
+        logger.info(f"[LLM处理完成] 当前任务数: {task_count}")
+        
         return ChatResponse(
             success=True,
             message="任务已更新",
@@ -225,6 +232,9 @@ async def chat_with_llm(request: ChatRequest):
             tasks=tasks
         )
     except Exception as e:
+        # Log error
+        logger.error(f"[LLM处理失败] {str(e)}")
+        
         # On error, still return current state
         current_tree = load_task_tree_local()
         current_tasks = database.get_all_tasks()

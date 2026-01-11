@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Dict, Any
 
 from langchain_core.prompts import PromptTemplate
@@ -10,6 +11,9 @@ try:
 except ImportError:
     # Standalone execution
     from config import config
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -44,6 +48,8 @@ class LLMClient:
         """
         task_tree_json = json.dumps(current_task_tree, ensure_ascii=False, indent=2)
         
+        logger.info(f"[LLM请求] 用户输入: {user_input}")
+        
         response = self.chain.invoke({
             "current_task_tree": task_tree_json,
             "user_input": user_input
@@ -51,6 +57,8 @@ class LLMClient:
         
         # Extract JSON from response
         content = response.content
+        logger.info(f"[LLM响应] {content}")
+        
         json_start = content.index("{")
         json_end = content.rindex("}") + 1
         response_json = content[json_start:json_end]
